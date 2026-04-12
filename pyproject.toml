@@ -1,0 +1,18 @@
+[project]
+name = "freenlace-crawler"
+version = "1"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "playwright (>=1.58.0,<2.0.0)",
+    "beautifulsoup4 (>=4.14.3,<5.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
