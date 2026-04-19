@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import re
 from connect import teste  
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False)  # importante testar com UI
+    browser = p.chromium.launch(headless=True)  # importante testar com UI
     page = browser.new_page()
     page.goto("https://www.99freelas.com.br/projects?order=mais-recentes&categoria=web-mobile-e-software")
     html = page.content()
@@ -22,7 +22,7 @@ del titles[0:2]
 
 print(titles)
 with sync_playwright() as p:                                                                                                                                                       
-   browser = p.chromium.launch(headless=False)  # importante testar com UI                                     
+   browser = p.chromium.launch(headless=True)  # importante testar com UI                                     
    page = browser.new_page()                                                                                   
    page.goto("https://www.workana.com/en/jobs?category=it-programming&language=pt")      
    html = page.content()                                                                                       
@@ -42,3 +42,4 @@ for item in soup.find_all("h2", class_="project-title"):
         
 for x in titles:
     teste(x)
+    
