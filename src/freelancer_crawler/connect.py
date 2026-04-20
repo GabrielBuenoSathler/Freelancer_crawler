@@ -1,4 +1,5 @@
 # Replace placeholders with your actual database credentials
+# # Replace placeholders with your actual database credentials
 from sqlalchemy import create_engine, text
 engine = create_engine("postgresql+psycopg2://docker:docker@localhost:5432/FREELANCERS")
 
