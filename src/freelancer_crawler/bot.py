@@ -3,7 +3,10 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 import logging
 import os
+from resq import *
 from dotenv import load_dotenv
+url ="http://127.0.0.1:8000/vagas_99freelas"
+
 load_dotenv()
 APP_ENV = os.getenv('TOKEN')
 print (APP_ENV)
@@ -18,8 +21,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
 
-async def get_vagas(update: Update, context: ContextTypes.DEFAULT_TYPE):                                    
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="puxando vagas da api")
+async def get_vagas(update: Update, context: ContextTypes.DEFAULT_TYPE):
+   vagas = teste(url)
+   for vaga in vagas[-10:]:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=vaga
+        )
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(APP_ENV).build()

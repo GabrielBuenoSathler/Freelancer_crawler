@@ -34,11 +34,11 @@ def show_records():
         [f.model_dump(mode="json") for f in freelas],
         ensure_ascii=False
         )
-        data = json.loads(json_data)
+        #data = json.loads(json_data)
 
-        for item in data:
-            print(item["titulo"])
+        #for item in data:
+         #   print(item["titulo"])
         return json_data
 
 
-print(type(show_records()))
+
