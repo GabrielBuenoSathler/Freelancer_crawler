@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-
+from connect import *
 app = FastAPI()
 
 
@@ -13,7 +13,5 @@ async def vagas_workana():
 
 @app.get("/vagas_99freelas")
 async def vagas_99freelas():
-    return {"message: vagas 99"}
-
-
+    return show_records()
 

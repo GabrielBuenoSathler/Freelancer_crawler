@@ -1,10 +1,10 @@
-# Replace placeholders with your actual database credentials
-# # Replace placeholders with your actual database credentials
+import json
+import datetime
+from pydantic import BaseModel
 from sqlalchemy import create_engine, text
+from datetime import datetime
+from typing import Optional
 engine = create_engine("postgresql+psycopg2://docker:docker@localhost:5432/FREELANCERS")
-
-from sqlalchemy import text
-
 def teste(values):
     with engine.connect() as conn:
         conn.execute(
@@ -17,6 +17,28 @@ def teste(values):
         )
         conn.commit()
 
+
+
+
+class Freela(BaseModel):
+    id: Optional[int] = None
+    titulo: str
+    created_at: Optional[datetime] = None
+    
+def show_records():
+    with engine.connect() as conn:
         result = conn.execute(text("SELECT * FROM freelas"))
-        for row in result:
-            print(f"titulo:{row.titulo}")
+        rows = result.mappings().all()
+        freelas = [Freela(**row) for row in rows]
+        json_data = json.dumps(
+        [f.model_dump(mode="json") for f in freelas],
+        ensure_ascii=False
+        )
+        data = json.loads(json_data)
+
+        for item in data:
+            print(item["titulo"])
+        return json_data
+
+
+print(type(show_records()))
