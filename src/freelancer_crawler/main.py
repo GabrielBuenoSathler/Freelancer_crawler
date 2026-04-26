@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from freelancer_crawler.connect import *
+from src.freelancer_crawler.connect import *
 
 app = FastAPI()
 
