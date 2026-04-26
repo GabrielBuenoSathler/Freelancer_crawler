@@ -22,11 +22,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
 
 async def get_vagas(update: Update, context: ContextTypes.DEFAULT_TYPE):
-   vagas = teste(url)
-   for vaga in vagas[-10:]:
+    vagas = teste(url)
+    
+    for titulo, link in vagas[-10:]:
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=vaga
+            text=f"{titulo}\n{link}"
         )
 
 if __name__ == '__main__':

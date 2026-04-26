@@ -1,45 +1,140 @@
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import re
-from connect import teste  
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)  # importante testar com UI
-    page = browser.new_page()
-    page.goto("https://www.99freelas.com.br/projects?order=mais-recentes&categoria=web-mobile-e-software")
-    html = page.content()
-    browser.close()
+import unicodedata
+from connect import insere_titulo_link
 
-page = str(html)
-soup = BeautifulSoup(page, 'html.parser')
+
+def transforma_link(text):
+    text = unicodedata.normalize('NFKD', text)
+    text = text.encode('ascii', 'ignore').decode('ascii')
+    text = text.lower()
+    text = re.sub(r'[^a-z0-9\s-]', '', text)
+    text = re.sub(r'\s+', '-', text)
+    return text.rstrip('-')
+
 
 titles = []
 
-for a in soup.find_all("a", href=True):
-    if a["href"].startswith("/project/"):
-        titles.append(a.get_text(strip=True))
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page()
 
-del titles[0:2]
+    # -------------------------
+    # 99Freelas
+    # -------------------------
+    page.goto("https://www.99freelas.com.br/projects?order=mais-recentes&categoria=web-mobile-e-software")
+    soup = BeautifulSoup(page.content(), 'html.parser')
 
-print(titles)
-with sync_playwright() as p:                                                                                                                                                       
-   browser = p.chromium.launch(headless=True)  # importante testar com UI                                     
-   page = browser.new_page()                                                                                   
-   page.goto("https://www.workana.com/en/jobs?category=it-programming&language=pt")      
-   html = page.content()                                                                                       
-   browser.close()                      
+    for a in soup.select('a[href^="/project/"]'):
+        titulo = a.get_text(strip=True)
+        if titulo:
+            titles.append(titulo)
 
-page_work = str (html)
-soup = BeautifulSoup(page_work,'html.parser')
+    # remove possíveis duplicados iniciais
+    titles = list(dict.fromkeys(titles))
 
-# Em vez de buscar por "title", buscamos pela classe que contém o título
-for item in soup.find_all("h2", class_="project-title"):
-    # Usamos regex apenas no pedaço de HTML desse item específico
-    texto_item = str(item)
-    match = re.search(r'title="([^"]+)"', texto_item)
-    if match:
-        titles.append(match.group(1))
+    # -------------------------
+    # Workana
+    # -------------------------
+    page.goto("https://www.workana.com/en/jobs?category=it-programming&language=pt")            
+    soup = BeautifulSoup(page.content(), 'html.parser')                                         
+                                                                                                
+    for item in soup.select("h2.project-title a"):                                              
+        titulo = item.get("title")                                                              
+        if titulo:                                                                              
+            titles.append(titulo)                                                               
+                                                                                                
+    browser.close()                                                                             
 
-        
-for x in titles:
-    teste(x)
-    
+
+
+
+                                                        
+
+# -------------------------
+# Gerar links corretamente
+# -------------------------
+jobs_with_links = []
+
+for title in titles:
+    slug = transforma_link(title)
+    link = f"https://www.workana.com/job/{slug}"
+    jobs_with_links.append(link)
+
+
+# -------------------------
+# Inserir no banco
+# -------------------------
+for title, link in zip(titles, jobs_with_links):
+    insere_titulo_link(title, link)
+
+
+
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page()
+
+    page.goto("https://www.freelancer.com/jobs/software-development")
+
+    # espera os cards carregarem (IMPORTANTE)
+    page.wait_for_selector("a.JobSearchCard-primary-heading-link")
+
+    soup = BeautifulSoup(page.content(), 'html.parser')
+
+    for item in soup.select("a.JobSearchCard-primary-heading-link"):
+        titulo = item.get_text(strip=True)
+        if titulo:
+            titles.append(titulo)
+            print(titulo)
+
+    browser.close()                                  
+
+
+
+for title in titles:                                        
+    slug = transforma_link(title)                           
+    link = f"https://www.freelancer.com/projects/automation/{slug}"                                                       
+    jobs_with_links.append(link)                            
+                                                            
+                                                            
+# -------------------------                                 
+# Inserir no banco                                          
+# -------------------------                                 
+for title, link in zip(titles, jobs_with_links):            
+    insere_titulo_link(title, link)                         
+                                                            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
