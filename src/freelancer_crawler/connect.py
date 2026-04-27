@@ -8,12 +8,12 @@ from dotenv import load_dotenv
 url ="http://127.0.0.1:8000/vagas_99freelas"
 
 load_dotenv()
-POSTGRES_PASS = os.getenv('POSTGRES_PASSWORD')
+POSTGRES_PASSWORD= os.getenv('POSTGRES_PASSWORD')
 POSTGRES_USER = os.getenv ('POSTGRES_USER')
 POSTGRES_DB   = os.getenv ('POSTGRES_DB')
 from typing import Optional
 
-engine = create_engine(f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASS}@localhost:5432/{POSTGRES_DB}")
+engine = create_engine(f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@db:5432/{POSTGRES_DB}")
 
 def insere_titulo_link(title, link):
     with engine.connect() as conn:
