@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from src.freelancer_crawler.connect import *
+from connect import *
 
 app = FastAPI()
 
@@ -10,9 +10,11 @@ async def root():
 
 @app.get("/vagas_workana")
 async def vagas_workana():
-    return {"message": "vagas workana"}
+    return vagas_por_plataforma('Workana')
 
-@app.get("/vagas_99freelas")
-async def vagas_99freelas():
-    return show_records()
+@app.get("/vagas_99freelas/{records}")
+async def vagas_99freelas(records:int = 0):
+    return show_records(records)
+
+
 

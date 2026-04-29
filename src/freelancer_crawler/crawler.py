@@ -5,6 +5,8 @@ import unicodedata
 from connect import insere_titulo_link
 
 
+plataforma = 'Workana'
+
 def transforma_link(text):
     text = unicodedata.normalize('NFKD', text)
     text = text.encode('ascii', 'ignore').decode('ascii')
@@ -36,19 +38,15 @@ with sync_playwright() as p:
 
     # -------------------------
     # Workana
-    # -------------------------
+    # ------------------------
+    #
+    titulo = []
     page.goto("https://www.workana.com/en/jobs?category=it-programming&language=pt")            
-    soup = BeautifulSoup(page.content(), 'html.parser')                                         
-                                                                                                
-    for item in soup.select("h2.project-title a"):                                              
-        titulo = item.get("title")                                                              
-        if titulo:                                                                              
-            titles.append(titulo)                                                               
-                                                                                                
+    soup = BeautifulSoup(page.content(), 'html.parser') 
+    for item in soup.select("h2.project-title a span[title]"):
+        titulo.append(item.get("title"))
+        print(titulo)
     browser.close()                                                                             
-
-
-
 
                                                         
 
@@ -57,9 +55,11 @@ with sync_playwright() as p:
 # -------------------------
 jobs_with_links = []
 
-for title in titles:
+for title in titulo:
+    #print(title)
     slug = transforma_link(title)
     link = f"https://www.workana.com/job/{slug}"
+    print(link)
     jobs_with_links.append(link)
 
 
@@ -67,9 +67,7 @@ for title in titles:
 # Inserir no banco
 # -------------------------
 for title, link in zip(titles, jobs_with_links):
-    insere_titulo_link(title, link)
-
-
+    insere_titulo_link(title, link,plataforma)
 
 
 with sync_playwright() as p:
@@ -103,7 +101,7 @@ for title in titles:
 # Inserir no banco                                          
 # -------------------------                                 
 for title, link in zip(titles, jobs_with_links):            
-    insere_titulo_link(title, link)                         
+    insere_titulo_link(title, link, plataforma)                         
                                                             
 
 
