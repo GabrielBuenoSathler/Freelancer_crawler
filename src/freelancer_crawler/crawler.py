@@ -4,8 +4,8 @@ import re
 import unicodedata
 from connect import insere_titulo_link
 
-
-plataforma = 'Workana'
+# Lista única para tudo
+jobs = []
 
 def transforma_link(text):
     text = unicodedata.normalize('NFKD', text)
@@ -14,9 +14,6 @@ def transforma_link(text):
     text = re.sub(r'[^a-z0-9\s-]', '', text)
     text = re.sub(r'\s+', '-', text)
     return text.rstrip('-')
-
-
-titles = []
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
@@ -30,109 +27,64 @@ with sync_playwright() as p:
 
     for a in soup.select('a[href^="/project/"]'):
         titulo = a.get_text(strip=True)
-        if titulo:
-            titles.append(titulo)
 
-    # remove possíveis duplicados iniciais
-    titles = list(dict.fromkeys(titles))
+        if titulo:
+            link = "https://www.99freelas.com.br" + a["href"]
+
+            jobs.append({
+                "titulo": titulo,
+                "link": link,
+                "plataforma": "99Freelas"
+            })
 
     # -------------------------
     # Workana
-    # ------------------------
-    #
-    titulo = []
-    page.goto("https://www.workana.com/en/jobs?category=it-programming&language=pt")            
-    soup = BeautifulSoup(page.content(), 'html.parser') 
+    # -------------------------
+    page.goto("https://www.workana.com/en/jobs?category=it-programming&language=pt")
+    soup = BeautifulSoup(page.content(), 'html.parser')
+
     for item in soup.select("h2.project-title a span[title]"):
-        titulo.append(item.get("title"))
-        print(titulo)
-    browser.close()                                                                             
+        titulo = item.get("title")
 
-                                                        
+        if titulo:
+            slug = transforma_link(titulo)
+            link = f"https://www.workana.com/job/{slug}"
 
-# -------------------------
-# Gerar links corretamente
-# -------------------------
-jobs_with_links = []
+            jobs.append({
+                "titulo": titulo,
+                "link": link,
+                "plataforma": "Workana"
+            })
 
-for title in titulo:
-    #print(title)
-    slug = transforma_link(title)
-    link = f"https://www.workana.com/job/{slug}"
-    print(link)
-    jobs_with_links.append(link)
-
-
-# -------------------------
-# Inserir no banco
-# -------------------------
-for title, link in zip(titles, jobs_with_links):
-    insere_titulo_link(title, link,plataforma)
-
-
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
-    page = browser.new_page()
-
+    # -------------------------
+    # Freelancer
+    # -------------------------
     page.goto("https://www.freelancer.com/jobs/software-development")
-
-    # espera os cards carregarem (IMPORTANTE)
     page.wait_for_selector("a.JobSearchCard-primary-heading-link")
 
     soup = BeautifulSoup(page.content(), 'html.parser')
 
     for item in soup.select("a.JobSearchCard-primary-heading-link"):
         titulo = item.get_text(strip=True)
+
         if titulo:
-            titles.append(titulo)
-            print(titulo)
+            slug = transforma_link(titulo)
+            link = f"https://www.freelancer.com/projects/automation/{slug}"
 
-    browser.close()                                  
+            jobs.append({
+                "titulo": titulo,
+                "link": link,
+                "plataforma": "Freelancer"
+            })
 
+    browser.close()
 
-
-for title in titles:                                        
-    slug = transforma_link(title)                           
-    link = f"https://www.freelancer.com/projects/automation/{slug}"                                                       
-    jobs_with_links.append(link)                            
-                                                            
-                                                            
-# -------------------------                                 
-# Inserir no banco                                          
-# -------------------------                                 
-for title, link in zip(titles, jobs_with_links):            
-    insere_titulo_link(title, link, plataforma)                         
-                                                            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# -------------------------
+# Inserir no banco
+# -------------------------
+for job in jobs:
+    insere_titulo_link(
+        job["titulo"],
+        job["link"],
+        job["plataforma"]
+    )
