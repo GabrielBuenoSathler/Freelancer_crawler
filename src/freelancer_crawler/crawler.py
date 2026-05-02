@@ -20,6 +20,15 @@ with sync_playwright() as p:
     page = browser.new_page()
 
     # -------------------------
+    # FUNÇÃO DESCRIÇÃO (USADA SÓ NO WORKANA)
+    # -------------------------
+    def descricao(descricao_vaga):
+        page.goto(descricao_vaga)
+        soup = BeautifulSoup(page.content(),'html.parser')
+        descricao_tag = soup.find("div", class_="expander")
+        return descricao_tag.get_text(strip=True) if descricao_tag else None
+
+    # -------------------------
     # 99Freelas
     # -------------------------
     page.goto("https://www.99freelas.com.br/projects?order=mais-recentes&categoria=web-mobile-e-software")
@@ -50,10 +59,13 @@ with sync_playwright() as p:
             slug = transforma_link(titulo)
             link = f"https://www.workana.com/job/{slug}"
 
+            desc = descricao(link)  # 👈 só aqui usa descrição
+
             jobs.append({
                 "titulo": titulo,
                 "link": link,
-                "plataforma": "Workana"
+                "plataforma": "Workana",
+                "descricao": desc
             })
 
     # -------------------------
@@ -82,9 +94,15 @@ with sync_playwright() as p:
 # -------------------------
 # Inserir no banco
 # -------------------------
+#
+
+
 for job in jobs:
+    print(job)
+
     insere_titulo_link(
         job["titulo"],
         job["link"],
-        job["plataforma"]
+        job["plataforma"],
+        job.get("descricao")
     )
