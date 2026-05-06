@@ -42,7 +42,7 @@ def perfil_to_text(user):
 # ======================================
 def gerar_embeddings_vagas(vagas):
     
-    # 🔥 Se já existe cache, usa
+    
     if os.path.exists(CACHE_FILE):
         print("🔹 Carregando embeddings do cache...")
         with open(CACHE_FILE, "rb") as f:
