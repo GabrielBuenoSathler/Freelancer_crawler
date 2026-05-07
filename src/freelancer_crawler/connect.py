@@ -71,22 +71,13 @@ def show_records(itens):
         )
 
 
-def get_vagas(itens):
- with engine.connect() as conn:                                                                    
-     result = conn.execute(text("SELECT titulo , descricao ,  FROM freelas LIMIT :limit"), {"limit": 100})           # -------------------------
-     rows = result.mappings().all()                                                                # FILTRAR POR PLATAFORMA
-                                                                                                   # -------------------------
-     freelas = [Freela(**row) for row in rows]                                                     def vagas_por_plataforma(plataforma):
+
+
+
+
+
+
+     def vagas_por_plataforma(plataforma):
                                                                                                        with engine.connect() as conn:
      return json.dumps(                                                                                    result = conn.execute(
-         [f.model_dump(mode="json") for f in freelas],                                                         text("SELECT * FROM freelas WHERE plataforma = :plataforma"),
-         ensure_ascii=False                                                                                    {"plataforma": plataforma}
-     )                                                                                                     )
-                                                                                                           rows = result.mappings().all()
-
-        freelas = [Freela(**row) for row in rows]
-
-        return json.dumps(
-            [f.model_dump(mode="json") for f in freelas],
-            ensure_ascii=False
-        )
+        
