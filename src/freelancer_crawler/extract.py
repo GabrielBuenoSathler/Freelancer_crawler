@@ -3,7 +3,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import os
 import pickle
-
+import connect import show_records 
 # ======================================
 # 🔹 1. Config
 # ======================================
@@ -18,12 +18,7 @@ model = SentenceTransformer(MODEL_NAME)
 # 🔹 2. Dados (mock ou banco)
 # ======================================
 vagas = [
-    {"id": 1, "descricao": "Desenvolvedor Python com experiência em APIs REST, Docker e AWS"},
-    {"id": 2, "descricao": "Frontend React com conhecimento em CSS, HTML e JavaScript"},
-    {"id": 3, "descricao": "Engenheiro de dados com Spark, Hadoop e Python"},
-]
-
-
+    
 user = {
     "skills": ["python", "docker", "aws"],
     "nivel": "pleno"

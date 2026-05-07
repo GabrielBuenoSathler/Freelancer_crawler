@@ -102,16 +102,19 @@ def show_records(itens):
             ensure_ascii=False
         )
 
-# -------------------------
-# FILTRAR POR PLATAFORMA
-# -------------------------
-def vagas_por_plataforma(plataforma):
-    with engine.connect() as conn:
-        result = conn.execute(
-            text("SELECT * FROM freelas WHERE plataforma = :plataforma"),
-            {"plataforma": plataforma}
-        )
-        rows = result.mappings().all()
+
+def get_vagas(itens):
+ with engine.connect() as conn:                                                                    
+     result = conn.execute(text("SELECT titulo , descricao ,  FROM freelas LIMIT :limit"), {"limit": 100})           # -------------------------
+     rows = result.mappings().all()                                                                # FILTRAR POR PLATAFORMA
+                                                                                                   # -------------------------
+     freelas = [Freela(**row) for row in rows]                                                     def vagas_por_plataforma(plataforma):
+                                                                                                       with engine.connect() as conn:
+     return json.dumps(                                                                                    result = conn.execute(
+         [f.model_dump(mode="json") for f in freelas],                                                         text("SELECT * FROM freelas WHERE plataforma = :plataforma"),
+         ensure_ascii=False                                                                                    {"plataforma": plataforma}
+     )                                                                                                     )
+                                                                                                           rows = result.mappings().all()
 
         freelas = [Freela(**row) for row in rows]
 
