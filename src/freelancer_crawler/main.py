@@ -4,13 +4,19 @@ from connect import *
 =======
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+<<<<<<< HEAD
+>>>>>>> parent of a86e1e8 (Revert "começando o crud")
+=======
 >>>>>>> parent of a86e1e8 (Revert "começando o crud")
 
 app = FastAPI()
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of a86e1e8 (Revert "começando o crud")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # Vite default
@@ -33,6 +39,9 @@ class User_profile(BaseModel):
     idiomas : str 
     skill : str 
 
+<<<<<<< HEAD
+>>>>>>> parent of a86e1e8 (Revert "começando o crud")
+=======
 >>>>>>> parent of a86e1e8 (Revert "começando o crud")
 @app.get("/")
 async def root():
@@ -59,7 +68,10 @@ async def create_user_profile(user_profile: User_profile):
     inserir_user_profile(user_profile.username, user_profile.nivel, user_profile.localizacao,user_profile.idiomas,user_profile.skill)  
 
     return {"message": "user_profile create_user"}
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of a86e1e8 (Revert "começando o crud")
 
 
 

@@ -44,11 +44,6 @@ def insere_titulo_link(title, link, plataforma, descricao=None):
             }
         )
 
-<<<<<<< HEAD
-# -------------------------
-# MODEL
-# -------------------------
-=======
 
 def inserir_user(username, email, password):           
     with engine.begin() as conn:                  
@@ -84,7 +79,6 @@ def inserir_user_profile(username, nivel, localizacao, idiomas, skill):
 
 
                                                       # MODEL
->>>>>>> parent of a86e1e8 (Revert "começando o crud")
 class Freela(BaseModel):
     id: Optional[int] = None
     titulo: str
@@ -108,6 +102,23 @@ def show_records(itens):
             ensure_ascii=False
         )
 
+# -------------------------
+# FILTRAR POR PLATAFORMA
+# -------------------------
+def vagas_por_plataforma(plataforma):
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT * FROM freelas WHERE plataforma = :plataforma"),
+            {"plataforma": plataforma}
+        )
+        rows = result.mappings().all()
+
+        freelas = [Freela(**row) for row in rows]
+
+        return json.dumps(
+            [f.model_dump(mode="json") for f in freelas],
+            ensure_ascii=False
+        )
 
 
 
@@ -115,7 +126,119 @@ def show_records(itens):
 
 
 
-     def vagas_por_plataforma(plataforma):
-                                                                                                       with engine.connect() as conn:
-     return json.dumps(                                                                                    result = conn.execute(
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
