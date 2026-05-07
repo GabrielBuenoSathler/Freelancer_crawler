@@ -124,22 +124,14 @@ def vagas_por_plataforma(plataforma):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def vagas_to_emb():                                              
+    with engine.connect() as conn:                                                 
+        result = conn.execute(                                                     
+            text("SELECT titulo, descricao from freelas WHERE descricao IS NOT NULL LIMIT 10"),          
+                                              
+        )                                                                          
+    vagas = result.mappings().all()
+    return vagas
 
 
 
