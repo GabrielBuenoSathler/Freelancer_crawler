@@ -44,23 +44,9 @@ def insere_titulo_link(title, link, plataforma, descricao=None):
             }
         )
 
-
-def inserir_user(username, email, password):           
-    with engine.begin() as conn:                  
-        conn.execute(                                                      
-            text("""                                                       
-                INSERT INTO users (username, email, password)  
-                VALUES (:username, :email, :password)           
-                           
-            """),                                                          
-            {                                                              
-                "username": username,                                           
-                "email": email,                                              
-                "password": password                                      
-            }                                                           
-        )
-        
-                                                                           # MODEL
+# -------------------------
+# MODEL
+# -------------------------
 class Freela(BaseModel):
     id: Optional[int] = None
     titulo: str
