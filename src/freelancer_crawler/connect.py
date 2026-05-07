@@ -26,7 +26,7 @@ engine = create_engine(
 # INSERT / UPDATE
 # -------------------------
 def insere_titulo_link(title, link, plataforma, descricao=None):
-    with engine.begin() as conn:  # ✅ commit automático
+    with engine.begin() as conn:  
         conn.execute(
             text("""
                 INSERT INTO freelas (titulo, link, plataforma, descricao)
@@ -44,9 +44,47 @@ def insere_titulo_link(title, link, plataforma, descricao=None):
             }
         )
 
+<<<<<<< HEAD
 # -------------------------
 # MODEL
 # -------------------------
+=======
+
+def inserir_user(username, email, password):           
+    with engine.begin() as conn:                  
+        conn.execute(                                                      
+            text("""                                                       
+                INSERT INTO users (username, email, password)  
+                VALUES (:username, :email, :password)           
+                           
+            """),                                                          
+            {                                                              
+                "username": username,                                           
+                "email": email,                                              
+                "password": password                                      
+            }                                                           
+        )
+ #| username | nivel | localizacao | idiomas | skill 
+def inserir_user_profile(username, nivel, localizacao, idiomas, skill):                          
+    with engine.begin() as conn:                                      
+        conn.execute(                                                 
+            text("""                                                  
+                INSERT INTO user_profile (username, nivel, localizacao, idiomas,skill)         
+                VALUES (:username, :nivel ,:localizacao, :idiomas, :skill)                 
+                                                                      
+            """),                                                     
+            {                                                         
+                "username": username,                                 
+                "nivel": nivel,                                       
+                "localizacao":localizacao,
+                "idiomas": idiomas,
+                "skill" : skill
+            }                                                         
+        )                                                             
+
+
+                                                      # MODEL
+>>>>>>> parent of a86e1e8 (Revert "começando o crud")
 class Freela(BaseModel):
     id: Optional[int] = None
     titulo: str
