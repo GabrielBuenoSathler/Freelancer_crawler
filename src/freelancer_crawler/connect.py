@@ -26,7 +26,7 @@ engine = create_engine(
 # INSERT / UPDATE
 # -------------------------
 def insere_titulo_link(title, link, plataforma, descricao=None):
-    with engine.begin() as conn:  
+    with engine.begin() as conn:  # ✅ commit automático
         conn.execute(
             text("""
                 INSERT INTO freelas (titulo, link, plataforma, descricao)
@@ -59,26 +59,8 @@ def inserir_user(username, email, password):
                 "password": password                                      
             }                                                           
         )
- #| username | nivel | localizacao | idiomas | skill 
-def inserir_user_profile(username, nivel, localizacao, idiomas, skill):                          
-    with engine.begin() as conn:                                      
-        conn.execute(                                                 
-            text("""                                                  
-                INSERT INTO user_profile (username, nivel, localizacao, idiomas,skill)         
-                VALUES (:username, :nivel ,:localizacao, :idiomas, :skill)                 
-                                                                      
-            """),                                                     
-            {                                                         
-                "username": username,                                 
-                "nivel": nivel,                                       
-                "localizacao":localizacao,
-                "idiomas": idiomas,
-                "skill" : skill
-            }                                                         
-        )                                                             
-
-
-                                                      # MODEL
+        
+                                                                           # MODEL
 class Freela(BaseModel):
     id: Optional[int] = None
     titulo: str
