@@ -2,9 +2,8 @@ from fastapi import FastAPI, Depends,HTTPException
 from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db 
 from models import User_profile, Users,Token
 from fastapi.middleware.cors import CORSMiddleware
-from security import get_password_hash, verify_password,create_access_token 
+from security import get_password_hash, verify_password,create_access_token,get_current_user 
 from fastapi.security import OAuth2PasswordRequestForm
-
 
 app = FastAPI()
 
@@ -38,12 +37,27 @@ async def create_user(user: Users):
     inserir_user(user.username, user.email, get_password_hash(user.password))
     return {"message": "user created"}
 
+
+
+
 @app.post('/user_profile/')
-async def create_user_profile(user_profile: User_profile):
-    inserir_user_profile(user_profile.username, user_profile.nivel, user_profile.localizacao,user_profile.idiomas,user_profile.skill)  
+async def create_user_profile(
+    user_profile: User_profile,
+    current_user: int = Depends(get_current_user),
+):
+    
 
-    return {"message": "user_profile create_user"}
 
+    inserir_user_profile(
+        current_user,  # id do usuário logado
+        user_profile.username,
+        user_profile.nivel,
+        user_profile.localizacao,
+        user_profile.idiomas,
+        user_profile.skill
+    )
+
+    return {"message": "user_profile created"}
 
 
 @app.post('/token', response_model=Token)

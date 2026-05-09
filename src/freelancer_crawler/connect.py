@@ -72,15 +72,16 @@ def inserir_user(username, email, password):
             }                                                           
         )
  #| username | nivel | localizacao | idiomas | skill 
-def inserir_user_profile(username, nivel, localizacao, idiomas, skill):                          
+def inserir_user_profile(user_id,username, nivel, localizacao, idiomas, skill):                          
     with engine.begin() as conn:                                      
         conn.execute(                                                 
             text("""                                                  
-                INSERT INTO user_profile (username, nivel, localizacao, idiomas,skill)         
-                VALUES (:username, :nivel ,:localizacao, :idiomas, :skill)                 
+                INSERT INTO user_profile (user_id,username, nivel, localizacao, idiomas,skill)         
+                VALUES (:user_id,:username, :nivel ,:localizacao, :idiomas, :skill)                 
                                                                       
             """),                                                     
-            {                                                         
+            {                                     
+                "user_id": user_id,
                 "username": username,                                 
                 "nivel": nivel,                                       
                 "localizacao":localizacao,
@@ -90,7 +91,6 @@ def inserir_user_profile(username, nivel, localizacao, idiomas, skill):
         )                                                             
 
 
-                                                      # MODEL
 
 # -------------------------
 # LISTAR REGISTROS

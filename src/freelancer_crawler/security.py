@@ -9,6 +9,7 @@ from jwt import DecodeError, decode, encode
 from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from connect import get_db 
 
 SECRET_KEY = 'your-very-secret-and-exclusive-key'  # Isso é provisório
 ALGORITHM = 'HS256'
@@ -32,3 +33,88 @@ def get_password_hash(password: str):
 
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+
+def get_current_user(
+    conn = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
+):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail='Could not validate credentials',
+        headers={'WWW-Authenticate': 'Bearer'},
+    )
+
+    try:
+        payload = decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        subject_email = payload.get('sub')
+
+        if subject_email is None:
+            raise credentials_exception
+
+    except InvalidTokenError:
+        raise credentials_exception
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, email
+            FROM users
+            WHERE email = %s
+            """,
+            (subject_email,)
+        )
+        print("-----------------TESTANDO A FUNCAO")
+        user = cur.fetchone()
+        print (user['id'])
+    if user is None:
+        raise credentials_exception
+
+    return user['id']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
