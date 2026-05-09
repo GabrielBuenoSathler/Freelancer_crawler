@@ -3,6 +3,8 @@ from models import Freela
 from sqlalchemy import create_engine, text
 import os
 from dotenv import load_dotenv
+import psycopg
+from psycopg.rows import dict_row
 
 # -------------------------
 # ENV
@@ -19,6 +21,18 @@ POSTGRES_DB       = os.getenv('POSTGRES_DB')
 engine = create_engine(
     f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}"
 )
+
+def get_db():
+    conn = psycopg.connect(
+        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}",
+        row_factory=dict_row
+    )
+
+    try:
+        yield conn
+    finally:
+        conn.close()
+
 
 # -------------------------
 # INSERT / UPDATE

@@ -1,11 +1,30 @@
-# ... outros imports
+from datetime import datetime,timedelta
 from pwdlib import PasswordHash
+from http import HTTPStatus
+from zoneinfo import ZoneInfo
 
-#... Outras constantes
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from jwt import DecodeError, decode, encode
+from pwdlib import PasswordHash
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+SECRET_KEY = 'your-very-secret-and-exclusive-key'  # Isso é provisório
+ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-pwd_context = PasswordHash.recommended() 
+pwd_context = PasswordHash.recommended()
 
-# ... outras funções
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(tz=ZoneInfo('UTC')) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    to_encode.update({'exp': expire})
+    encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
 
 def get_password_hash(password: str):
     return pwd_context.hash(password) 

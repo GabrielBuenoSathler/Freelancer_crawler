@@ -20,4 +20,13 @@ class User_profile(BaseModel):
     nivel: str                                                 
     localizacao: str                                           
     idiomas : str                                              
-    skill : str                                                
+    skill : str
+
+class Login(BaseModel):    
+    username : str
+    password : str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
