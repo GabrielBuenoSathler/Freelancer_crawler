@@ -64,11 +64,11 @@ def vagas_to_emb(limit=100):
 
 user = {
     "skills": [
-        "python",
-        "docker",
+        "Inteligência Artificial",
+        "Web",
         "aws",
         "fastapi",
-        "postgresql"
+        "Inteligencia"
     ],
     "nivel": "pleno"
 }

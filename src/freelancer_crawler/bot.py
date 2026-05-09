@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 import logging
 import os
-from resq import *
+from resq import teste
 from dotenv import load_dotenv
 url ="http://127.0.0.1:8000/vagas_99freelas"
 

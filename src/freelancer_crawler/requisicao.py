@@ -4,8 +4,6 @@ import json
 
 url = "http://127.0.0.1:8000/vagas_99freelas"
 
-import requests
-import json
 
 def teste(url): 
     response = requests.get(url)

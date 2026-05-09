@@ -1,22 +1,12 @@
 from fastapi import FastAPI
-from connect import *
-<<<<<<< HEAD
-=======
-from pydantic import BaseModel
+from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user
+from models import User_profile, Users
 from fastapi.middleware.cors import CORSMiddleware
-<<<<<<< HEAD
->>>>>>> parent of a86e1e8 (Revert "começando o crud")
-=======
->>>>>>> parent of a86e1e8 (Revert "começando o crud")
 
 app = FastAPI()
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> parent of a86e1e8 (Revert "começando o crud")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # Vite default
@@ -27,22 +17,6 @@ app.add_middleware(
 
 
 
-class Users(BaseModel):
-    username: str
-    email: str
-    password: str
-# | username | nivel | localizacao | idiomas | skill 
-class User_profile(BaseModel):         
-    username: str
-    nivel: str
-    localizacao: str 
-    idiomas : str 
-    skill : str 
-
-<<<<<<< HEAD
->>>>>>> parent of a86e1e8 (Revert "começando o crud")
-=======
->>>>>>> parent of a86e1e8 (Revert "começando o crud")
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -56,8 +30,6 @@ async def vagas_99freelas(records:int = 0):
     return show_records(records)
 
 
-<<<<<<< HEAD
-=======
 @app.post("/users/")
 async def create_user(user: Users):
     inserir_user(user.username, user.email, user.password)
@@ -68,35 +40,5 @@ async def create_user_profile(user_profile: User_profile):
     inserir_user_profile(user_profile.username, user_profile.nivel, user_profile.localizacao,user_profile.idiomas,user_profile.skill)  
 
     return {"message": "user_profile create_user"}
-<<<<<<< HEAD
 
-=======
->>>>>>> parent of a86e1e8 (Revert "começando o crud")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> parent of a86e1e8 (Revert "começando o crud")
 

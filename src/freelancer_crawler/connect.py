@@ -1,10 +1,8 @@
 import json
-from pydantic import BaseModel
+from models import Freela
 from sqlalchemy import create_engine, text
-from datetime import datetime
 import os
 from dotenv import load_dotenv
-from typing import Optional
 
 # -------------------------
 # ENV
@@ -79,13 +77,6 @@ def inserir_user_profile(username, nivel, localizacao, idiomas, skill):
 
 
                                                       # MODEL
-class Freela(BaseModel):
-    id: Optional[int] = None
-    titulo: str
-    link: Optional[str] = None
-    created_at: Optional[datetime] = None
-    plataforma: Optional[str] = None
-    descricao: Optional[str] = None
 
 # -------------------------
 # LISTAR REGISTROS

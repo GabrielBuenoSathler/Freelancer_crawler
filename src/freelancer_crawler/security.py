@@ -1,5 +1,4 @@
 # ... outros imports
-from jwt import encode
 from pwdlib import PasswordHash
 
 #... Outras constantes
