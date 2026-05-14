@@ -22,16 +22,15 @@ engine = create_engine(
     f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}"
 )
 
+
+
 def get_db():
-    conn = psycopg.connect(
+    with psycopg.connect(
         f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}",
         row_factory=dict_row
-    )
-
-    try:
+    ) as conn:
+        print("GETDB")
         yield conn
-    finally:
-        conn.close()
 
 
 # -------------------------
@@ -139,19 +138,15 @@ def vagas_to_emb():
     return vagas
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+def profile(user_id):                                                                                   
+    with engine.connect() as conn:                                                                    
+        result = conn.execute(                                                                        
+            text("SELECT nivel , skill from user_profile  WHERE user_id = :user_id"), 
+            {"user_id" : user_id}
+        )                                                                                             
+    profiles  = result.mappings().all()   
+    return profiles                  
+                        
 
 
 

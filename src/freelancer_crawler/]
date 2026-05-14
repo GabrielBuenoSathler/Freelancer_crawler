@@ -2,10 +2,11 @@ from datetime import datetime,timedelta
 from pwdlib import PasswordHash
 from http import HTTPStatus
 from zoneinfo import ZoneInfo
-from models import Users 
+from jwt import InvalidTokenError
+
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from jwt import DecodeError, decode, encode,InvalidTokenError
+from jwt import DecodeError, decode, encode
 from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -38,91 +39,45 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 
 
-# security.py - get_current_user
 def get_current_user(
     conn = Depends(get_db),
     token: str = Depends(oauth2_scheme),
 ):
-
-    print("TOKEN:", token)
-
-    if token is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Token não enviado"
-        )
-
-    print("CONN CLOSED?", conn.closed)
     credentials_exception = HTTPException(
-        status_code=HTTPStatus.UNAUTHORIZED,
+        status_code=401,
         detail='Could not validate credentials',
         headers={'WWW-Authenticate': 'Bearer'},
     )
+    print(credentials_exception)
+
     try:
-        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        subject_email = payload.get("sub")
+        payload = decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+        print("🔥 PAYLOAD COMPLETO:", payload)
+        subject_email = payload.get('sub')
         if subject_email is None:
             raise credentials_exception
+
     except InvalidTokenError:
         raise credentials_exception
 
-    # psycopg3: execute direto na conexão, sem .cursor() como context manager
-    row = conn.execute(
-        "SELECT id, email FROM users WHERE email = %s",
-        (subject_email,)
-    ).fetchone()
 
-    if row is None:
+    print("🔥 TOKEN RECEBIDO:", token)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, email FROM users WHERE email = %s",
+            (subject_email,)
+        )
+        user = cur.fetchone()
+
+    if user is None:
         raise credentials_exception
 
-    return row["id"]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return user[0] if isinstance(user, tuple) else user["id"]
 
 
 
