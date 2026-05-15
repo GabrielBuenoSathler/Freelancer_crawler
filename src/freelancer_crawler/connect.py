@@ -148,15 +148,16 @@ def profile(user_id):
     return profiles                  
                         
 
-
-
-
-
-
-
-
-
-
+def get_skills(user_id):                                                                             
+    with engine.connect() as conn:                                                                
+        result = conn.execute(                                                                    
+            text("SELECT skill from user_profile  WHERE user_id = :user_id"),             
+            {"user_id" : user_id}                                                                 
+        )                                                                                         
+    skill  = result.mappings().all()                                                           
+    return skill                                                                  
+                                                                                                
+                                                                                                  
 
 
 

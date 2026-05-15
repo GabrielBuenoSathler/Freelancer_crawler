@@ -7,7 +7,7 @@ import os
 
 from connect import engine
 
-# ======================================
+# =====================================
 # CONFIG
 # ======================================
 
@@ -19,7 +19,7 @@ model = SentenceTransformer(MODEL_NAME)
 
 
 # ======================================
-# BUSCAR VAGAS NO BANCO
+# BUSCAR VAGAS
 # ======================================
 
 def vagas_to_emb(limit=100):
@@ -46,7 +46,6 @@ def vagas_to_emb(limit=100):
 
             descricao = row["descricao"]
 
-            # ignora vazios
             if not descricao:
                 continue
 
@@ -59,46 +58,33 @@ def vagas_to_emb(limit=100):
 
 
 # ======================================
-# USUÁRIO
-# ======================================
-
-user = {
-    "skills": [
-        "Inteligência Artificial",
-        "Web",
-        "aws",
-        "fastapi",
-        "Inteligencia"
-    ],
-    "nivel": "pleno"
-}
-
-
-# ======================================
 # PERFIL -> TEXTO
 # ======================================
 
 def perfil_to_text(user):
 
-    skills = " ".join(user["skills"])
+    print("USER:", user)
+
+    # se vier lista
+    if isinstance(user["skill"], list):
+        skill = " ".join(user["skill"])
+
+    # se vier string do banco
+    else:
+        skill = str(user["skill"])
 
     texto = f"""
-    Skills: {skills}
-    Nivel: {user['nivel']}
+    Skill: {skill}
     """
 
     return texto.strip()
 
 
 # ======================================
-# GERAR EMBEDDINGS
+# GERAR EMBEDDINGS VAGAS
 # ======================================
 
 def gerar_embeddings_vagas(vagas):
-
-    # =========================
-    # TENTA CACHE
-    # =========================
 
     if os.path.exists(CACHE_FILE):
 
@@ -109,7 +95,6 @@ def gerar_embeddings_vagas(vagas):
             with open(CACHE_FILE, "rb") as f:
                 vagas_cache = pickle.load(f)
 
-            # valida estrutura
             if (
                 isinstance(vagas_cache, list)
                 and len(vagas_cache) > 0
@@ -117,25 +102,14 @@ def gerar_embeddings_vagas(vagas):
             ):
 
                 print("✅ Cache válido")
-
                 return vagas_cache
-
-            else:
-                print("⚠ Cache inválido")
 
         except Exception as e:
             print(f"⚠ Erro ao carregar cache: {e}")
 
-    # =========================
-    # GERA NOVOS EMBEDDINGS
-    # =========================
-
     print("🔹 Gerando embeddings...")
 
-    textos = [
-        vaga["descricao"]
-        for vaga in vagas
-    ]
+    textos = [vaga["descricao"] for vaga in vagas]
 
     embeddings = model.encode(
         textos,
@@ -144,12 +118,9 @@ def gerar_embeddings_vagas(vagas):
         show_progress_bar=True
     )
 
-    # adiciona embedding
     for i, vaga in enumerate(vagas):
-
         vaga["embedding"] = embeddings[i]
 
-    # salva cache
     with open(CACHE_FILE, "wb") as f:
         pickle.dump(vagas, f)
 
@@ -178,7 +149,7 @@ def gerar_embedding_usuario(user):
 # MATCH
 # ======================================
 
-def match_vagas(user_embedding, vagas, top_k=10):
+def calcular_match_vagas(user_embedding, vagas, top_k=10):
 
     vaga_embeddings = np.array([
         vaga["embedding"]
@@ -195,11 +166,9 @@ def match_vagas(user_embedding, vagas, top_k=10):
     for i, vaga in enumerate(vagas):
 
         resultados.append({
-
             "titulo": vaga["titulo"],
             "descricao": vaga["descricao"],
             "score": float(scores[i])
-
         })
 
     resultados.sort(
@@ -221,15 +190,9 @@ def mostrar_resultados(resultados):
     for i, vaga in enumerate(resultados, start=1):
 
         print(f"#{i}")
-
         print(f"Título: {vaga['titulo']}")
-
         print(f"Score: {vaga['score']:.4f}")
-
-        descricao = vaga["descricao"][:300]
-
-        print(f"Descrição:\n{descricao}")
-
+        print(f"Descrição:\n{vaga['descricao'][:300]}")
         print("-" * 60)
 
 
@@ -237,38 +200,27 @@ def mostrar_resultados(resultados):
 # PIPELINE
 # ======================================
 
-def run():
+def match_vagas(user):
 
     print("🔹 Buscando vagas...")
 
     vagas = vagas_to_emb()
 
-    print(f"✅ {len(vagas)} vagas carregadas")
+    print(f"✅ {len(vagas)} vagas encontradas")
 
-    if len(vagas) == 0:
-        print("❌ Nenhuma vaga encontrada")
-        return
-
-    # embeddings vagas
     vagas = gerar_embeddings_vagas(vagas)
 
-    # embedding user
+    print("🔹 Gerando embedding do usuário...")
+
     user_embedding = gerar_embedding_usuario(user)
 
-    # match
-    resultados = match_vagas(
+    print("🔹 Fazendo match...")
+
+    resultados = calcular_match_vagas(
         user_embedding,
-        vagas,
-        top_k=10
+        vagas
     )
 
-    # mostrar
     mostrar_resultados(resultados)
 
-
-# ======================================
-# MAIN
-# ======================================
-
-if __name__ == "__main__":
-    run()
+    return resultados
