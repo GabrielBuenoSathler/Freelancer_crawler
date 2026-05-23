@@ -131,7 +131,7 @@ def vagas_por_plataforma(plataforma):
 def vagas_to_emb():                                              
     with engine.connect() as conn:                                                 
         result = conn.execute(                                                     
-            text("SELECT titulo, descricao from freelas WHERE descricao IS NOT NULL LIMIT 10"),          
+            text("SELECT titulo, descricao from freelas WHERE descricao IS NOT NULL "),          
                                               
         )                                                                          
     vagas = result.mappings().all()
@@ -148,15 +148,16 @@ def profile(user_id):
     return profiles                  
                         
 
-
-
-
-
-
-
-
-
-
+def get_skills(user_id):                                                                             
+    with engine.connect() as conn:                                                                
+        result = conn.execute(                                                                    
+            text("SELECT skill from user_profile  WHERE user_id = :user_id"),             
+            {"user_id" : user_id}                                                                 
+        )                                                                                         
+    skill  = result.mappings().all()                                                           
+    return skill                                                                  
+                                                                                                
+                                                                                                  
 
 
 

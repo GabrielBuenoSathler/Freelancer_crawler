@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Depends,HTTPException
-from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,profile
+from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,profile,get_skills 
 from models import User_profile, Users,Token
 from fastapi.middleware.cors import CORSMiddleware
 from security import get_password_hash, verify_password,create_access_token,get_current_user 
 from fastapi.security import OAuth2PasswordRequestForm
 from connect import profile as db_profile
 
+from extract import match_vagas
 app = FastAPI()
 
 
@@ -81,7 +82,15 @@ def login_for_acess_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/profile")
-def profile(
+async def profile(
     current_user: int = Depends(get_current_user)
 ):
     return db_profile(current_user)
+
+
+@app.get("/match_vagas")
+async def match( current_user: int = Depends(get_current_user)):
+    skills  = get_skills(current_user)
+    print(skills[1])
+    return match_vagas(skills[1])
+  
