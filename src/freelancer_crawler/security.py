@@ -11,7 +11,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from connect import get_db 
 
-SECRET_KEY = 'your-very-secret-and-exclusive-key'  # Isso é provisório
+import os
+
+SECRET_KEY = os.getenv('SECRET_KEY', 'your-very-secret-and-exclusive-key')
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = PasswordHash.recommended()

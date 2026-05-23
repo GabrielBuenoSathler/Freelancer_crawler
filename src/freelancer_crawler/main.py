@@ -1,19 +1,22 @@
+import os
 from fastapi import FastAPI, Depends,HTTPException
-from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,profile,get_skills 
+from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,profile,get_skills
 from models import User_profile, Users,Token
 from fastapi.middleware.cors import CORSMiddleware
-from security import get_password_hash, verify_password,create_access_token,get_current_user 
+from security import get_password_hash, verify_password,create_access_token,get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from connect import profile as db_profile
 
 from extract import match_vagas
 app = FastAPI()
 
-
+_cors_extra = os.getenv("CORS_ORIGIN", "")
+_origins = [_cors_extra] if _cors_extra else []
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite default
+    allow_origins=_origins,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

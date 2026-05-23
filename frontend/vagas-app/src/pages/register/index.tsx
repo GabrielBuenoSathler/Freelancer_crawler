@@ -1,13 +1,14 @@
 import { useState } from "react";
-import Form_Skill from './Form_Skill.tsx'
-import { Link, useNavigate } from "react-router-dom";  
+import { useNavigate } from "react-router-dom";
 
+const API = import.meta.env.VITE_API_URL ?? "";
 
-function Form() {
+function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -18,7 +19,7 @@ function Form() {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/users", {
+      const response = await fetch(`${API}/users/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -31,13 +32,12 @@ function Form() {
       console.log("Resposta do backend:", data);
 
       alert("Cliente cadastrado com sucesso!");
-      navigate("/Form_Skill");
+      navigate("/register-skill");
     } catch (error) {
       console.error("Erro ao enviar dados:", error);
       alert("Erro ao cadastrar cliente");
     }
 
-    // limpar formulário
     setUsername("");
     setEmail("");
     setPassword("");
@@ -116,4 +116,4 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-export default Form;
+export default Register;
