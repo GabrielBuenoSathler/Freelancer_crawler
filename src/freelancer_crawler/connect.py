@@ -14,19 +14,21 @@ load_dotenv()
 POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 POSTGRES_USER     = os.getenv('POSTGRES_USER')
 POSTGRES_DB       = os.getenv('POSTGRES_DB')
+DB_HOST           = os.getenv('DB_HOST', 'localhost')
+DB_PORT           = os.getenv('DB_PORT', '5432')
 
 # -------------------------
 # DB CONNECTION
 # -------------------------
 engine = create_engine(
-    f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}"
+    f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DB_HOST}:{DB_PORT}/{POSTGRES_DB}"
 )
 
 
 
 def get_db():
     with psycopg.connect(
-        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}",
+        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DB_HOST}:{DB_PORT}/{POSTGRES_DB}",
         row_factory=dict_row
     ) as conn:
         print("GETDB")

@@ -1,19 +1,22 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import App from './App.tsx'; 
-import Form from './Form.tsx';
-import Form_Skill from './Form_Skill.tsx'
+import Home from './pages/home';
+import Register from './pages/register';
+import RegisterSkill from './pages/register-skill';
+import Login from './pages/login';
+import Vagas from './pages/vagas';
 
-function AppRouter() { // Nome alterado para evitar conflito
+function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes> {/* O correto é Routes, não Router */}
-        <Route path="/" element={<App />} />
-        <Route path="/Form" element={<Form />} />  
-        <Route path="/Form_Skill" element={<Form_Skill />} />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/register-skill" element={<RegisterSkill />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/vagas" element={<Vagas />} />
       </Routes>
     </BrowserRouter>
   );
 }
-  
+
 export default AppRouter;
