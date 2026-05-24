@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, Depends,HTTPException
 from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,profile,get_skills
-from models import User_profile, Users,Token
+from models import User_profile, Users, Token, VagaMatch
 from fastapi.middleware.cors import CORSMiddleware
 from security import get_password_hash, verify_password,create_access_token,get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
@@ -91,9 +91,12 @@ async def profile(
     return db_profile(current_user)
 
 
-@app.get("/match_vagas")
-async def match( current_user: int = Depends(get_current_user)):
-    skills  = get_skills(current_user)
-    print(skills[1])
-    return match_vagas(skills[1])
+@app.get("/match_vagas", response_model=list[VagaMatch])
+async def match(current_user: int = Depends(get_current_user)):
+    skills = get_skills(current_user)
+    if not skills:
+        raise HTTPException(status_code=400, detail="User profile not found. Please create a profile first.")
+
+    print(skills)
+    return match_vagas(skills[0])
   
