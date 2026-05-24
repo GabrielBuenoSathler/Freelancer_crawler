@@ -14,12 +14,17 @@ from connect import engine
 MODEL_NAME = "all-MiniLM-L6-v2"
 CACHE_FILE = "vaga_embeddings.pkl"
 
-print("🔹 Carregando modelo...")
-model = SentenceTransformer(MODEL_NAME)
+_model = None
 
+def get_model():
+    global _model
+    if _model is None:
+        print("🔹 Carregando modelo...")
+        _model = SentenceTransformer(MODEL_NAME)
+    return _model
 
 # ======================================
-# BUSCAR VAGAS
+# BUSC
 # ======================================
 
 def vagas_to_emb(limit=100):
@@ -27,10 +32,16 @@ def vagas_to_emb(limit=100):
     query = text("""
         SELECT
             titulo,
-            descricao
+            descricao,
+            link,
+            plataforma
+
         FROM freelas
         WHERE descricao IS NOT NULL
-        LIMIT :limit
+        AND plataforma IS NOT NULL
+        AND created_at >= '2026-03-01'::timestamp
+        AND created_at < '2026-06-01'::timestamp
+
     """)
 
     vagas = []
@@ -51,7 +62,10 @@ def vagas_to_emb(limit=100):
 
             vagas.append({
                 "titulo": row["titulo"],
-                "descricao": descricao.strip()
+                "descricao": descricao.strip(),
+                "link" : row["link"],
+                "plataforma":row["plataforma"]
+
             })
 
     return vagas
@@ -111,7 +125,7 @@ def gerar_embeddings_vagas(vagas):
 
     textos = [vaga["descricao"] for vaga in vagas]
 
-    embeddings = model.encode(
+    embeddings = get_model().encode(
         textos,
         batch_size=32,
         convert_to_numpy=True,
@@ -137,7 +151,7 @@ def gerar_embedding_usuario(user):
 
     texto = perfil_to_text(user)
 
-    embedding = model.encode(
+    embedding = get_model().encode(
         texto,
         convert_to_numpy=True
     )
@@ -168,6 +182,8 @@ def calcular_match_vagas(user_embedding, vagas, top_k=10):
         resultados.append({
             "titulo": vaga["titulo"],
             "descricao": vaga["descricao"],
+            "plataforma": vaga["plataforma"],
+            "link": vaga["link"],
             "score": float(scores[i])
         })
 
@@ -186,12 +202,13 @@ def calcular_match_vagas(user_embedding, vagas, top_k=10):
 def mostrar_resultados(resultados):
 
     print("\n========== RESULTADOS ==========\n")
-
     for i, vaga in enumerate(resultados, start=1):
 
         print(f"#{i}")
         print(f"Título: {vaga['titulo']}")
+        print(f"Plataforma: {vaga['plataforma']}")
         print(f"Score: {vaga['score']:.4f}")
+        print()
         print(f"Descrição:\n{vaga['descricao'][:300]}")
         print("-" * 60)
 

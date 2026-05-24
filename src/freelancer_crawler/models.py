@@ -30,3 +30,10 @@ class Login(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class VagaMatch(BaseModel):
+    titulo: str
+    descricao: str
+    plataforma: str
+    link: str
+    score: float
