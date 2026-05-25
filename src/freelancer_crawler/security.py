@@ -13,7 +13,9 @@ from connect import get_db
 
 import os
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'your-very-secret-and-exclusive-key')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError('SECRET_KEY environment variable is required for production security')
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = PasswordHash.recommended()
@@ -46,15 +48,12 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
 ):
 
-    print("TOKEN:", token)
-
     if token is None:
         raise HTTPException(
             status_code=401,
             detail="Token não enviado"
         )
 
-    print("CONN CLOSED?", conn.closed)
     credentials_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
         detail='Could not validate credentials',

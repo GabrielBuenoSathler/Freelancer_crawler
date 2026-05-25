@@ -34,6 +34,7 @@ function Home() {
 
       const data = await res.json();
       localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("email", loginEmail);
       navigate("/vagas");
     } catch {
       alert("E-mail ou senha incorretos.");
@@ -54,6 +55,22 @@ function Home() {
       });
 
       if (!res.ok) throw new Error("Erro ao criar conta");
+
+      // Auto-login after registration
+      const loginRes = await fetch(`${API}/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          username: registerEmail,
+          password: registerPassword,
+        }),
+      });
+
+      if (!loginRes.ok) throw new Error("Erro ao fazer login");
+
+      const loginData = await loginRes.json();
+      localStorage.setItem("access_token", loginData.access_token);
+      localStorage.setItem("email", registerEmail);
 
       navigate("/register-skill");
     } catch {

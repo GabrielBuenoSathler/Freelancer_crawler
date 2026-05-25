@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const NIVEIS = ["Júnior", "Pleno", "Sênior"];
 
@@ -18,19 +19,44 @@ function toggleItem(list: string[], item: string): string[] {
 const API = import.meta.env.VITE_API_URL ?? "";
 
 function RegisterSkill() {
+  const navigate = useNavigate();
   const [nivel, setNivel] = useState("");
   const [localizacao, setLocalizacao] = useState("");
   const [idiomas, setIdiomas] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    const email = localStorage.getItem("email");
+
+    if (!token || !email) {
+      navigate("/");
+    }
+  }, [navigate]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const username = localStorage.getItem("username") ?? "";
-    const token = localStorage.getItem("token") ?? "";
+    const email = localStorage.getItem("email") ?? "";
+    const token = localStorage.getItem("access_token") ?? "";
+
+    if (!token) {
+      alert("Você precisa estar logado para criar um perfil");
+      return;
+    }
+
+    if (!email) {
+      alert("Erro: email não encontrado");
+      return;
+    }
+
+    if (!nivel || !localizacao || idiomas.length === 0 || skills.length === 0) {
+      alert("Por favor, preencha todos os campos");
+      return;
+    }
 
     const dados = {
-      username,
+      username: email,
       nivel,
       localizacao,
       idiomas: idiomas.join(", "),
@@ -47,12 +73,19 @@ function RegisterSkill() {
         body: JSON.stringify(dados),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Erro ao enviar dados");
+      }
+
       const data = await response.json();
       console.log("Resposta do backend:", data);
-      alert("Dados enviados com sucesso!");
+      alert("Perfil criado com sucesso! Agora você pode ver as vagas.");
+      // Navigate to vagas page
+      window.location.href = "/vagas";
     } catch (error) {
       console.error("Erro ao enviar dados:", error);
-      alert("Erro ao enviar dados");
+      alert(error instanceof Error ? error.message : "Erro ao enviar dados");
     }
 
     setNivel("");

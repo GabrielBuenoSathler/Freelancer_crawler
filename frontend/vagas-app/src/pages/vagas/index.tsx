@@ -45,6 +45,10 @@ function Vagas() {
           navigate("/");
           return null;
         }
+        if (res.status === 400) {
+          navigate("/register-skill");
+          return null;
+        }
         if (!res.ok) throw new Error("Erro ao carregar vagas");
         return res.json() as Promise<Freela[]>;
       })
