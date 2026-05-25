@@ -59,10 +59,9 @@ poetry install
 Create a `.env` file in the project root:
 
 ```env
-POSTGRES_USER=docker
-POSTGRES_PASSWORD=docker
-POSTGRES_DB=FREELANCERS
-
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
 # Telegram bot token
 TOKEN=<your-telegram-bot-token>
 ```
