@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+
+DEPLOY_VPS_MANUAL.txt
 # Distribution / packaging
 .Python
 build/
