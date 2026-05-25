@@ -1,21 +1,36 @@
-FROM python:3.13.13-trixie
-
- #Evita .pyc e melhora logs
+FROM python:3.13.13-slim-bookworm as builder
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Instala Poetry
-RUN pip install poetry
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Config: não criar virtualenv dentro do container
+RUN pip install --no-cache-dir poetry
+
 RUN poetry config virtualenvs.create false
 
-WORKDIR /freelancer_crawler/src/freelancer_crawler
+WORKDIR /app
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN poetry install  --no-interaction --no-ansi --no-root
+RUN poetry install --no-interaction --no-ansi --no-root --only main
+
+
+FROM python:3.13.13-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libc6 libstdc++6 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY src/freelancer_crawler/ .
 
