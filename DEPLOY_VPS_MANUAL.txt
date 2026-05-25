@@ -1,0 +1,794 @@
+================================================================================
+                    FREELANCER CRAWLER - DEPLOY COM DOCKER
+================================================================================
+
+Data: 2026-05-25
+Projeto: Freelancer Crawler (FastAPI + React + PostgreSQL + Docker)
+Plataforma: Ubuntu 22.04+ / VPS Linux
+
+================================================================================
+ÍNDICE
+================================================================================
+
+1. PRÉ-REQUISITOS
+2. PREPARAR A VPS
+3. CLONAR E CONFIGURAR PROJETO
+4. VARIÁVEIS DE AMBIENTE
+5. DEPLOY COM DOCKER COMPOSE
+6. CONFIGURAR NGINX (REVERSE PROXY)
+7. CERTIFICADO SSL/HTTPS
+8. TESTES E VALIDAÇÃO
+9. MONITORAMENTO E LOGS
+10. TROUBLESHOOTING
+11. BACKUP E RESTORE
+12. DICAS DE SEGURANÇA
+
+================================================================================
+1. PRÉ-REQUISITOS
+================================================================================
+
+Antes de começar, você vai precisar de:
+
+- Uma VPS com acesso SSH/root
+- Ubuntu 22.04 ou versão mais recente
+- Um domínio próprio (para SSL)
+- Conhecimento básico de Linux/terminal
+- Git configurado com suas credenciais
+- ~2GB de RAM mínimo
+- ~20GB de espaço em disco
+
+================================================================================
+2. PREPARAR A VPS
+================================================================================
+
+PASSO 1: Conectar à VPS via SSH
+
+ssh root@seu_ip_da_vps
+
+PASSO 2: Atualizar o sistema
+
+sudo apt update
+sudo apt upgrade -y
+
+PASSO 3: Instalar Docker e dependências
+
+sudo apt install -y curl wget git build-essential nginx certbot \
+  python3-certbot-nginx docker.io docker-compose
+
+PASSO 4: Criar usuário não-root (RECOMENDADO)
+
+sudo useradd -m -s /bin/bash appuser
+sudo usermod -aG docker appuser
+sudo usermod -aG sudo appuser
+
+PASSO 5: Mudar para o novo usuário
+
+sudo su - appuser
+
+================================================================================
+3. CLONAR E CONFIGURAR PROJETO
+================================================================================
+
+PASSO 1: Clonar o repositório
+
+cd /home/appuser
+git clone https://github.com/seu-usuario/freelancer-crawler.git
+cd freelancer-crawler
+
+PASSO 2: Verificar docker-compose.yml existe
+
+ls -la docker-compose.yml
+
+(Se não existir, veja a seção "Estrutura Docker" abaixo)
+
+================================================================================
+4. VARIÁVEIS DE AMBIENTE
+================================================================================
+
+PASSO 1: Criar arquivo .env na raiz do projeto
+
+cat > .env << 'EOF'
+# ============================================================================
+# BANCO DE DADOS
+# ============================================================================
+POSTGRES_USER=freelancer_user
+POSTGRES_PASSWORD=sua_senha_forte_aqui
+POSTGRES_DB=FREELANCERS
+
+# ============================================================================
+# CORS (Cross-Origin Resource Sharing)
+# ============================================================================
+CORS_ORIGIN=https://seudominio.com
+
+# ============================================================================
+# SEGURANÇA - JWT
+# ============================================================================
+SECRET_KEY=gere_uma_chave_aleatoria_com_openssl_rand_hex_32
+
+# ============================================================================
+# TELEGRAM BOT (Opcional)
+# ============================================================================
+TOKEN=seu_token_telegram_opcional
+
+# ============================================================================
+# AMBIENTE
+# ============================================================================
+ENVIRONMENT=production
+LOG_LEVEL=INFO
+EOF
+
+PASSO 2: Proteger arquivo .env
+
+chmod 600 .env
+
+PASSO 3: Gerar SECRET_KEY segura (copie o resultado)
+
+openssl rand -hex 32
+
+PASSO 4: Editar .env com valores reais
+
+nano .env
+
+IMPORTANTE:
+- Substitua 'sua_senha_forte_aqui' por uma senha segura
+  Dica: openssl rand -base64 32
+- Substitua 'seudominio.com' pelo seu domínio real
+- Substitua SECRET_KEY pelo resultado do openssl rand -hex 32
+- Nunca commite .env no Git!
+
+================================================================================
+5. DEPLOY COM DOCKER COMPOSE
+================================================================================
+
+PASSO 1: Iniciar os serviços
+
+docker compose up -d --build
+
+Este comando vai:
+- Build das imagens Docker
+- Criar container PostgreSQL
+- Criar container FastAPI
+- Criar container React
+- Iniciar todos automaticamente
+
+PASSO 2: Verificar se tudo está rodando
+
+docker compose ps
+
+OUTPUT ESPERADO:
+NAME                     IMAGE                      STATUS          PORTS
+freelancer-db            postgres:15                Up 2 minutes    5432/tcp
+freelancer-api           freelancer-api             Up 1 minute     8000/tcp
+freelancer-frontend      freelancer-frontend        Up 1 minute     5173/tcp
+
+PASSO 3: Verificar logs (em tempo real)
+
+docker compose logs -f
+
+(Ctrl+C para sair)
+
+PASSO 4: Verificar logs específicos de um serviço
+
+docker compose logs -f api        # Apenas FastAPI
+docker compose logs -f db         # Apenas PostgreSQL
+docker compose logs -f frontend   # Apenas React
+
+================================================================================
+6. CONFIGURAR NGINX (REVERSE PROXY)
+================================================================================
+
+IMPORTANTE: Docker está rodando, agora precisamos de um reverse proxy
+no host para rotear tráfego HTTP/HTTPS para os containers Docker.
+
+PASSO 1: Criar arquivo de configuração do Nginx
+
+sudo tee /etc/nginx/sites-available/freelancer-crawler > /dev/null << 'EOF'
+upstream api_backend {
+    server 127.0.0.1:8000;
+}
+
+upstream frontend_backend {
+    server 127.0.0.1:5173;
+}
+
+server {
+    listen 80;
+    server_name seudominio.com www.seudominio.com;
+    client_max_body_size 100M;
+
+    access_log /var/log/nginx/freelancer_access.log;
+    error_log /var/log/nginx/freelancer_error.log;
+
+    # Frontend React
+    location / {
+        proxy_pass http://frontend_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # API FastAPI
+    location /api/ {
+        proxy_pass http://api_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 300s;
+    }
+
+    # Documentação API
+    location /docs {
+        proxy_pass http://api_backend;
+        proxy_set_header Host $host;
+    }
+
+    location /openapi.json {
+        proxy_pass http://api_backend;
+        proxy_set_header Host $host;
+    }
+}
+EOF
+
+PASSO 2: Ativar a configuração
+
+sudo ln -s /etc/nginx/sites-available/freelancer-crawler /etc/nginx/sites-enabled/
+
+PASSO 3: Remover configuração padrão
+
+sudo rm -f /etc/nginx/sites-enabled/default
+
+PASSO 4: Testar sintaxe
+
+sudo nginx -t
+
+OUTPUT ESPERADO:
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+PASSO 5: Recarregar Nginx
+
+sudo systemctl restart nginx
+
+PASSO 6: Verificar status
+
+sudo systemctl status nginx
+
+================================================================================
+7. CERTIFICADO SSL/HTTPS
+================================================================================
+
+IMPORTANTE: Só faça isto depois de atualizar o DNS para apontar para sua VPS!
+Aguarde 5-10 minutos após mudar DNS.
+
+PASSO 1: Instalar certificado com Let's Encrypt
+
+sudo certbot --nginx -d seudominio.com -d www.seudominio.com
+
+PASSO 2: Escolher email e aceitar termos
+
+Certbot vai:
+- Validar domínio
+- Gerar certificados em /etc/letsencrypt/live/seudominio.com/
+- Atualizar Nginx automaticamente
+
+PASSO 3: Verificar se HTTPS está funcionando
+
+curl -I https://seudominio.com
+
+OUTPUT ESPERADO:
+HTTP/1.1 200 OK
+...
+ssl_certificate /etc/letsencrypt/live/seudominio.com/fullchain.pem;
+
+PASSO 4: Configurar renovação automática
+
+sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer
+
+PASSO 5: Testar renovação (sem realmente renovar)
+
+sudo certbot renew --dry-run
+
+================================================================================
+8. TESTES E VALIDAÇÃO
+================================================================================
+
+PASSO 1: Verificar containers rodando
+
+docker compose ps
+
+PASSO 2: Testar API localmente
+
+curl http://localhost:8000/
+curl http://localhost:8000/docs
+
+PASSO 3: Testar através do Nginx
+
+curl http://localhost/api/
+curl http://seudominio.com/
+
+PASSO 4: Testar com HTTPS
+
+curl https://seudominio.com/
+curl https://seudominio.com/api/docs
+
+PASSO 5: Testar funcionalidades principais
+
+# Criar usuário
+curl -X POST https://seudominio.com/users/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"teste","email":"teste@exemplo.com","password":"senha123"}'
+
+# Login
+curl -X POST https://seudominio.com/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d 'username=teste@exemplo.com&password=senha123'
+
+PASSO 6: Acessar aplicação no navegador
+
+Abra: https://seudominio.com/
+
+Teste:
+[ ] Home page carrega
+[ ] Signup/Login funcionam
+[ ] Criar perfil de skills
+[ ] Matching de vagas
+
+================================================================================
+9. MONITORAMENTO E LOGS
+================================================================================
+
+VER LOGS EM TEMPO REAL
+
+# Todos os serviços
+docker compose logs -f
+
+# Apenas um serviço
+docker compose logs -f api
+docker compose logs -f db
+docker compose logs -f frontend
+
+# Últimas 100 linhas
+docker compose logs --tail=100 api
+
+# Filtrar por padrão
+docker compose logs --grep=ERROR api
+
+MONITORAR CONTAINERS
+
+# Status dos containers
+docker compose ps
+
+# Uso de recursos (CPU, memória)
+docker stats
+
+# Acessar shell do container
+docker compose exec api bash
+docker compose exec db psql -U freelancer_user -d FREELANCERS
+
+VER LOGS DO NGINX (HOST)
+
+sudo tail -100 /var/log/nginx/freelancer_access.log
+sudo tail -50 /var/log/nginx/freelancer_error.log
+
+# Ver em tempo real
+sudo tail -f /var/log/nginx/freelancer_error.log
+
+================================================================================
+10. TROUBLESHOOTING
+================================================================================
+
+PROBLEMA: Container não inicia
+
+SOLUÇÃO:
+docker compose logs -f api  # Ver erro detalhado
+docker compose up api       # Rodar sem -d para ver saída
+
+PROBLEMA: "Port already in use"
+
+SOLUÇÃO:
+docker ps -a                 # Listar todos containers
+docker stop <container_id>   # Parar container
+docker compose down          # Parar tudo
+docker compose up -d         # Reiniciar
+
+PROBLEMA: Nginx retorna 502 Bad Gateway
+
+SOLUÇÃO:
+docker compose ps            # Verificar se api está UP
+docker compose logs api      # Ver logs do FastAPI
+sudo systemctl status nginx  # Verificar Nginx no host
+
+PROBLEMA: Banco de dados não conecta
+
+SOLUÇÃO:
+docker compose logs db       # Ver logs do PostgreSQL
+docker compose exec db psql -U freelancer_user -d FREELANCERS -c "SELECT 1;"
+
+PROBLEMA: Frontend em branco
+
+SOLUÇÃO:
+docker compose logs frontend
+# Verificar se proxy está correto em nginx.conf
+# Certificar que CORS_ORIGIN está no .env
+
+PROBLEMA: Certificado SSL vencido
+
+SOLUÇÃO:
+sudo certbot renew
+sudo systemctl reload nginx
+
+PROBLEMA: Disco cheio
+
+SOLUÇÃO:
+df -h                         # Ver uso de disco
+docker system prune          # Limpar imagens/containers não usados
+docker volume ls             # Listar volumes
+docker compose down -v       # Remover volumes (cuidado: deleta BD!)
+
+PROBLEMA: Quer reconstruir tudo do zero
+
+SOLUÇÃO:
+docker compose down -v       # Remove tudo (cuidado com dados!)
+docker compose up --build    # Reconstrói e inicia
+
+RECOMENDADO: Fazer backup antes!
+
+================================================================================
+11. BACKUP E RESTORE
+================================================================================
+
+BACKUP DE BANCO DE DADOS
+
+PASSO 1: Fazer backup (enquanto containers rodando)
+
+docker compose exec db pg_dump -U freelancer_user FREELANCERS > \
+  backup_$(date +%Y%m%d_%H%M%S).sql
+
+PASSO 2: Comprimir backup
+
+gzip backup_*.sql
+
+PASSO 3: Copiar para local seguro (seu computador)
+
+# Do seu PC local:
+scp appuser@seu_vps_ip:/home/appuser/freelancer-crawler/backup_*.sql.gz ~/backups/
+
+RESTORE DE BANCO DE DADOS
+
+PASSO 1: Copiar arquivo de backup para VPS
+
+scp ~/backups/backup_20260525.sql.gz appuser@seu_vps_ip:/home/appuser/freelancer-crawler/
+
+PASSO 2: Descomprimir
+
+gunzip backup_*.sql.gz
+
+PASSO 3: Restaurar banco (containers precisam estar rodando)
+
+docker compose exec -T db psql -U freelancer_user FREELANCERS < backup_20260525.sql
+
+BACKUP DE .env
+
+IMPORTANTE: Backup seguro do arquivo .env (fora do Git)
+
+cp /home/appuser/freelancer-crawler/.env /home/appuser/.env.backup
+chmod 600 /home/appuser/.env.backup
+
+BACKUP COMPLETO DO PROJETO
+
+tar -czf freelancer-backup-$(date +%Y%m%d).tar.gz \
+  --exclude=.git \
+  --exclude=node_modules \
+  --exclude=venv \
+  --exclude=.venv \
+  --exclude=__pycache__ \
+  /home/appuser/freelancer-crawler
+
+================================================================================
+12. DICAS DE SEGURANÇA
+================================================================================
+
+FIREWALL (UFW)
+
+Ativar firewall:
+sudo ufw enable
+
+Abrir portas necessárias:
+sudo ufw allow 22/tcp       # SSH
+sudo ufw allow 80/tcp       # HTTP
+sudo ufw allow 443/tcp      # HTTPS
+
+Verificar:
+sudo ufw status verbose
+
+ARQUIVO .env
+
+NUNCA commite .env no Git:
+echo ".env" >> .gitignore
+git rm --cached .env
+
+Proteger arquivo:
+chmod 600 /home/appuser/freelancer-crawler/.env
+
+Backup seguro:
+cp .env ~/.env.backup
+chmod 600 ~/.env.backup
+
+SECRETS SEGUROS
+
+Gerar SECRET_KEY:
+openssl rand -hex 32
+
+Gerar senha do banco:
+openssl rand -base64 32
+
+Nunca usar valores de exemplo em produção!
+
+ACESSO RESTRITO AO BANCO
+
+Docker já isola PostgreSQL por padrão.
+Para ainda mais segurança, editar docker-compose.yml:
+
+services:
+  db:
+    ports:
+      # Comentar a linha abaixo para não expor porta
+      # - "5432:5432"
+
+Assim banco só é acessível do container api.
+
+NGINX - SERVER SIGNATURE
+
+Adicionar a /etc/nginx/nginx.conf:
+
+http {
+    server_tokens off;
+    ...
+}
+
+Reload:
+sudo systemctl reload nginx
+
+NGINX - RATE LIMITING
+
+Editar /etc/nginx/sites-available/freelancer-crawler:
+
+http {
+    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+}
+
+server {
+    location /api/ {
+        limit_req zone=api burst=20 nodelay;
+        ...
+    }
+}
+
+MONITORAMENTO
+
+Instalar Fail2Ban:
+sudo apt install fail2ban
+sudo systemctl enable fail2ban
+
+Monitorar recursos:
+free -h                     # Memória
+df -h                       # Disco
+docker stats                # CPU/RAM dos containers
+
+CERTIFICADO SSL
+
+Verificar expiração:
+openssl x509 -in /etc/letsencrypt/live/seudominio.com/fullchain.pem \
+  -noout -dates
+
+Renovação automática está configurada:
+sudo systemctl status certbot.timer
+
+================================================================================
+13. COMANDOS ÚTEIS
+================================================================================
+
+CONTAINERS
+
+docker compose ps                      # Status
+docker compose up -d                   # Iniciar
+docker compose down                    # Parar
+docker compose restart                 # Reiniciar
+docker compose restart api             # Reiniciar só um
+docker compose logs -f api             # Ver logs
+docker compose exec api bash           # Acessar shell
+
+IMAGENS
+
+docker images                          # Listar imagens
+docker rmi <image_id>                  # Remover imagem
+docker compose build --no-cache        # Rebuild sem cache
+
+VOLUMES
+
+docker volume ls                       # Listar volumes
+docker volume inspect <volume>         # Detalhes
+docker compose down -v                 # Remove volumes (CUIDADO!)
+
+REDE
+
+docker network ls                      # Listar redes
+docker network inspect <network>       # Detalhes
+
+LIMPEZA
+
+docker system prune                    # Limpar não usados
+docker system prune -a                 # Limpar agressivo
+docker volume prune                    # Remover volumes não usados
+
+NGINX
+
+sudo systemctl restart nginx           # Reiniciar
+sudo systemctl reload nginx            # Recarregar (sem reset conexões)
+sudo nginx -t                          # Testar sintaxe
+sudo systemctl status nginx            # Status
+
+================================================================================
+14. ATUALIZAR CÓDIGO E DEPENDÊNCIAS
+================================================================================
+
+ATUALIZAR CÓDIGO
+
+cd /home/appuser/freelancer-crawler
+git pull origin main
+
+ATUALIZAR E REINICIAR
+
+git pull origin main
+docker compose up -d --build
+
+Docker vai:
+- Fazer rebuild das imagens
+- Parar containers antigos
+- Iniciar novos containers
+
+Aplicação fica online durante o processo (zero downtime se bem feito).
+
+RODAR CRAWLER MANUALMENTE
+
+docker compose exec api python crawler.py
+
+ACESSAR BANCO DIRETAMENTE
+
+docker compose exec db psql -U freelancer_user -d FREELANCERS
+
+Exemplo de query:
+SELECT COUNT(*) FROM freelas;
+SELECT * FROM users;
+
+REINICIAR UM CONTAINER
+
+docker compose restart api
+
+Aplicação reinicia em ~1-2 segundos.
+
+================================================================================
+15. ESTRUTURA DOCKER (Para referência)
+================================================================================
+
+Se o docker-compose.yml não existir, crie com este conteúdo:
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: freelancer-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - freelancer-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: freelancer-api
+    command: >
+      sh -c "cd /app/src/freelancer_crawler &&
+             uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      SECRET_KEY: ${SECRET_KEY}
+      TOKEN: ${TOKEN}
+      ENVIRONMENT: ${ENVIRONMENT}
+      LOG_LEVEL: ${LOG_LEVEL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - freelancer-network
+
+  frontend:
+    build:
+      context: ./frontend/vagas-app
+      dockerfile: Dockerfile
+    container_name: freelancer-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend/vagas-app:/app
+    networks:
+      - freelancer-network
+
+volumes:
+  postgres-data:
+
+networks:
+  freelancer-network:
+    driver: bridge
+
+================================================================================
+16. PRÓXIMOS PASSOS
+================================================================================
+
+[ ] VPS está atualizada
+[ ] Docker instalado e rodando
+[ ] Projeto clonado
+[ ] .env configurado corretamente
+[ ] docker compose up -d executado
+[ ] Containers estão UP
+[ ] Nginx redirecionando corretamente
+[ ] Certificado SSL instalado
+[ ] HTTPS funcionando
+[ ] Aplicação acessível via domínio
+[ ] Backups configurados
+[ ] Monitoramento em lugar
+[ ] Firewall configurado
+
+RECOMENDAÇÕES ADICIONAIS
+
+1. Configure alertas/notificações:
+   - Uptime monitor (Uptime Robot, Statuspage)
+   - Email alerts para erros
+
+2. Configure logs centralizados:
+   - ELK Stack ou similar
+   - CloudWatch, Datadog, etc
+
+3. Configure auto-scaling/failover:
+   - Docker Swarm ou Kubernetes
+   - Load balancer
+
+4. Configurar CI/CD:
+   - GitHub Actions para deploy automático
+   - Testes antes de deploy
+
+5. Rotação de logs:
+   - Configurar logrotate para nginx/docker
+
+================================================================================
+FIM DO MANUAL
+================================================================================
+
+Versão: 2.0 (Docker)
+Última atualização: 2026-05-25
+Autor: Claude Code
+Simplificado com Docker Compose para máxima portabilidade e facilidade.

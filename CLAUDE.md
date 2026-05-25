@@ -71,7 +71,30 @@ Uses **Vite** for fast dev server and builds. Dev server at `localhost:5173` pro
 
 ## Common Development Tasks
 
-### Setup
+### Initial Setup
+
+#### Option 1: Docker (Recommended)
+```bash
+# Create .env file in project root
+cat > .env << EOF
+POSTGRES_USER=docker
+POSTGRES_PASSWORD=docker
+POSTGRES_DB=FREELANCERS
+CORS_ORIGIN=http://localhost:5173
+TOKEN=<telegram-bot-token>  # Optional
+EOF
+
+# Build and start all services
+docker compose up --build
+
+# Services will be available at:
+# - Frontend: http://localhost:5173
+# - Backend API: http://localhost:8000
+# - API Docs: http://localhost:8000/docs
+# - Database: localhost:5432
+```
+
+#### Option 2: Local Installation
 ```bash
 # Backend dependencies
 poetry install
@@ -81,13 +104,57 @@ npm install
 
 # Install Playwright browsers (needed for crawler)
 playwright install chromium
+
+# Create .env in project root
+POSTGRES_USER=docker
+POSTGRES_PASSWORD=docker
+POSTGRES_DB=FREELANCERS
 ```
 
 ### Running Services
 
+#### Full Stack with Docker (One Command)
+```bash
+# Start everything (frontend, backend, database)
+docker compose up --build
+
+# On subsequent runs (no rebuild needed)
+docker compose up
+
+# Stop services
+docker compose down
+
+# View logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f api
+docker compose logs -f frontend
+docker compose logs -f db
+```
+
+#### Individual Services with Docker
+```bash
+# Backend only (with hot-reload)
+docker compose up api
+
+# Frontend only (with hot-reload)
+docker compose up frontend
+
+# Database only
+docker compose up db
+
+# Database + Backend
+docker compose up db api
+```
+
+#### Local Development (Without Docker)
+
 **Backend (FastAPI)**
 ```bash
-# From src/freelancer_crawler/
+# From project root
+poetry install
+cd src/freelancer_crawler
 uvicorn main:app --reload
 # API: http://localhost:8000
 # Docs: http://localhost:8000/docs
@@ -96,52 +163,143 @@ uvicorn main:app --reload
 **Frontend (Vite)**
 ```bash
 # From frontend/vagas-app/
+npm install
 npm run dev
 # Dev server: http://localhost:5173
 ```
 
-**Database (Docker)**
+**Database (Docker only)**
 ```bash
-# Start PostgreSQL
+# If running backend locally, still need Docker for PostgreSQL
 docker compose up db -d
-
-# Full stack (API + frontend + DB)
-docker compose up --build
 ```
 
-**Crawler (one-off)**
+#### Docker Development Tips
+- **Hot Reload**: Source code volumes are mounted, so changes auto-reload
+- **Rebuild**: `docker compose up --build` to rebuild images
+- **Clean Start**: `docker compose down -v` removes volumes (clears database)
+- **Shell Access**: `docker compose exec api bash` or `docker compose exec frontend sh`
+- **Database Shell**: `docker compose exec db psql -U docker -d FREELANCERS`
+
+#### Crawler (one-off)
 ```bash
-# From src/freelancer_crawler/
-python crawler.py
+# Using Docker (recommended)
+docker compose exec api python crawler.py
+
+# Or locally
+python src/freelancer_crawler/crawler.py
 ```
 
-**Telegram Bot**
+#### Telegram Bot
 ```bash
-# Set TOKEN env var first
-TOKEN=<bot-token> python bot.py
+# Using Docker
+TOKEN=<bot-token> docker compose up bot
+
+# Or locally
+TOKEN=<bot-token> python src/freelancer_crawler/bot.py
 ```
 
 ### Building & Linting
 
-**Frontend**
+#### Frontend
+
+**With Docker**
+```bash
+docker compose exec frontend npm run build    # TypeScript compile + Vite bundle
+docker compose exec frontend npm run lint     # ESLint
+```
+
+**Locally**
 ```bash
 cd frontend/vagas-app
 npm run build   # TypeScript compile + Vite bundle
 npm run lint    # ESLint
 ```
 
-**Backend**
+#### Backend
+
+**With Docker**
 ```bash
-ruff check src/freelancer_crawler/  # Linting with Ruff
+docker compose exec api ruff check src/freelancer_crawler/
+```
+
+**Locally**
+```bash
+ruff check src/freelancer_crawler/
 ```
 
 ### Testing
+
+#### With Docker
 ```bash
-# Run pytest (config in pyproject.toml ignores postgres-data)
+# Run all tests
+docker compose exec api pytest
+
+# Run specific test
+docker compose exec api pytest tests/test_um.py
+
+# Run with coverage
+docker compose exec api pytest --cov=src/freelancer_crawler
+```
+
+#### Locally
+```bash
+# Requires poetry and postgres running
+poetry install
 pytest
 
 # Run specific test
 pytest tests/test_um.py
+```
+
+---
+
+## Docker Compose Configuration
+
+The project uses `docker-compose.yml` to orchestrate three services:
+
+### Services
+- **`api`**: FastAPI backend (Python 3.13+)
+  - Port: 8000
+  - Volume: `./` → `/app` (hot-reload enabled)
+  - Depends on: `db`
+  - Env vars: Loaded from `.env`
+
+- **`frontend`**: React + Vite frontend (Node 20+)
+  - Port: 5173
+  - Volume: `./frontend/vagas-app` → `/app` (hot-reload enabled)
+  - Depends on: `api`
+
+- **`db`**: PostgreSQL 15
+  - Port: 5432
+  - Volume: `postgres-data` (persists database)
+  - Env vars: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+
+### Environment Variables (`.env`)
+```env
+POSTGRES_USER=docker
+POSTGRES_PASSWORD=docker
+POSTGRES_DB=FREELANCERS
+CORS_ORIGIN=http://localhost:5173  # Or your frontend URL
+TOKEN=<telegram-bot-token>          # Optional, for bot.py
+```
+
+### Common Docker Compose Tasks
+```bash
+# View all containers status
+docker compose ps
+
+# Rebuild specific service
+docker compose build api
+
+# Remove all containers and volumes
+docker compose down -v
+
+# Run one-off command in container
+docker compose run api python -m pytest
+
+# View real-time logs with timestamps
+docker compose logs -f --timestamps
 ```
 
 ---
