@@ -15,7 +15,10 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN poetry install --no-interaction --no-ansi --no-root --only main
+# Install CPU-only PyTorch before other dependencies to avoid GPU versions
+RUN pip install --no-cache-dir "torch>=2.0.0,<3.0.0" --index-url https://download.pytorch.org/whl/cpu
+
+RUN poetry install --no-interaction --no-ansi --no-root --only main --no-directory
 
 
 FROM python:3.13.13-slim-bookworm
