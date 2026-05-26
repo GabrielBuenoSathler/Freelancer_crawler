@@ -1,34 +1,34 @@
 FROM python:3.13.13-slim-bookworm as builder
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir poetry
-
-RUN poetry config virtualenvs.create false
-
 WORKDIR /app
 
 COPY pyproject.toml poetry.lock* ./
 
-# Install CPU-only PyTorch before other dependencies to avoid GPU versions
+RUN pip install poetry && poetry config virtualenvs.create false
+
 RUN pip install --no-cache-dir "torch>=2.0.0,<3.0.0" --index-url https://download.pytorch.org/whl/cpu
 
-RUN poetry install --no-interaction --no-ansi --no-root --only main --no-directory
+RUN poetry export --format requirements.txt --output requirements.txt --only main
+
+RUN pip install --no-cache-dir -r requirements.txt
 
 
 FROM python:3.13.13-slim-bookworm
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libc6 libstdc++6 \
-    && rm -rf /var/lib/apt/lists/*
+    libstdc++6 \
+    && rm -rf /var/lib/apt/lists/* /tmp/*
 
 WORKDIR /app
 
