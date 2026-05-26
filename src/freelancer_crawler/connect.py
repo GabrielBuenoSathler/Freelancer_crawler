@@ -21,7 +21,7 @@ DB_PORT           = os.getenv('DB_PORT', '5432')
 # DB CONNECTION
 # -------------------------
 engine = create_engine(
-    f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DB_HOST}:{DB_PORT}/{POSTGRES_DB}"
+    f"postgresql+psycopg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DB_HOST}:{DB_PORT}/{POSTGRES_DB}"
 )
 
 
