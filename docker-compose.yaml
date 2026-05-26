@@ -2,7 +2,6 @@ services:
   app:
     build:
       context: .
-    image: gabrielbueno123/api:latest
     container_name: minha_api
     ports:
       - "8000:8000"
@@ -38,7 +37,6 @@ services:
     build:
       context: ./frontend/vagas-app
       dockerfile: Dockerfile
-    image: gabrielbueno123/frontend:latest
     container_name: minha_frontend
     ports:
       - "80:80"
