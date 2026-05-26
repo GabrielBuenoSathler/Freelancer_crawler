@@ -12,13 +12,12 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN pip install poetry && poetry config virtualenvs.create false
+RUN pip install --no-cache-dir "poetry>=1.8.0"
+
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi --no-root
 
 RUN pip install --no-cache-dir "torch>=2.0.0,<3.0.0" --index-url https://download.pytorch.org/whl/cpu
-
-RUN poetry export --format requirements.txt --output requirements.txt --only main
-
-RUN pip install --no-cache-dir -r requirements.txt
 
 
 FROM python:3.13.13-slim-bookworm
