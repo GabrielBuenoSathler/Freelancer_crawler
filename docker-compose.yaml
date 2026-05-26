@@ -2,8 +2,6 @@ services:
   app:
     build:
       context: .
-      cache_from:
-        - gabrielbueno123/api:latest
     image: gabrielbueno123/api:latest
     container_name: minha_api
     ports:
@@ -40,8 +38,6 @@ services:
     build:
       context: ./frontend/vagas-app
       dockerfile: Dockerfile
-      cache_from:
-        - gabrielbueno123/frontend:latest
     image: gabrielbueno123/frontend:latest
     container_name: minha_frontend
     ports:
