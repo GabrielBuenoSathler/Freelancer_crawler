@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, Depends,HTTPException
-from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,profile,get_skills
+from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,profile,get_skills,update_users
 from models import User_profile, Users, Token, VagaMatch
 from fastapi.middleware.cors import CORSMiddleware
 from security import get_password_hash, verify_password,create_access_token,get_current_user
@@ -43,6 +43,14 @@ async def create_user(user: Users):
     return {"message": "user created"}
 
 
+@app.delete("/users/id")
+async def delete_users():
+    pass
+
+@app.put("/user/")
+async def update_user(user: Users):
+    update_users(user.id,user.username , user.email , user.password)
+    return {"message": "usuario atualizado"}
 
 
 @app.post('/user_profile/')

@@ -7,6 +7,8 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    networks:
+      - app_network
     env_file:
       - .env
     environment:
@@ -42,6 +44,10 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    volumes:
+      - /var/www/certbot:/var/www/certbot:ro
+    networks:
+      - app_network
     deploy:
       resources:
         limits:
@@ -55,6 +61,8 @@ services:
       - "5432:5432"
     restart: always
     shm_size: 256mb
+    networks:
+      - app_network
     env_file:
       - .env
     environment:
@@ -74,3 +82,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+networks:
+  app_network:
+    driver: bridge

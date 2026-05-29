@@ -92,6 +92,20 @@ def inserir_user_profile(user_id,username, nivel, localizacao, idiomas, skill):
         )                                                             
 
 
+def update_users(user_id, username, email, password):
+    with engine.begin() as conn:
+        conn.execute(
+            text("""UPDATE users SET username = :username, email = :email, password = :password WHERE user_id = :user_id"""),
+            {
+                "user_id": user_id,
+                "username": username,
+                "email": email,
+                "password": password
+            }
+        )
+
+
+
 
 # -------------------------
 # LISTAR REGISTROS
