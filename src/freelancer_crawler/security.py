@@ -2,13 +2,9 @@ from datetime import datetime,timedelta
 from pwdlib import PasswordHash
 from http import HTTPStatus
 from zoneinfo import ZoneInfo
-from models import Users 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from jwt import DecodeError, decode, encode,InvalidTokenError
-from pwdlib import PasswordHash
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from jwt import decode, encode,InvalidTokenError
 from connect import get_db 
 
 import os
