@@ -71,22 +71,22 @@ async def create_user_profile( user_profile : User_profile,
     return {"message": "user_profile created"}
 
 
-@app.put('/user_profile/')                                  
-async def create_user_profile( user_profile : User_profile,  
-    conn  = Depends(get_db),                                 
-    current_user: Users = Depends(get_current_user)          
-):                                                           
-    print("ew")                                              
-    update_profile(                                    
-        current_user,  # id do usuário logado                
-        user_profile.username,                               
-        user_profile.nivel,                                  
-        user_profile.localizacao,                            
-        user_profile.idiomas,                                
-        user_profile.skill                                   
-    )                                                        
-                                                             
-    return {"message": "user_profile update !"}               
+@app.put('/user_profile/')
+async def update_user_profile(
+    user_profile: User_profile,
+    conn=Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
+    update_profile(
+        current_user,  # id do usuário logado
+        user_profile.username,
+        user_profile.nivel,
+        user_profile.localizacao,
+        user_profile.idiomas,
+        user_profile.skill,
+    )
+
+    return {"message": "user_profile update !"}
 
 
 @app.post('/token', response_model=Token)

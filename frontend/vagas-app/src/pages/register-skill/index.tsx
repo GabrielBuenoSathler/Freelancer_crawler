@@ -95,141 +95,230 @@ function RegisterSkill() {
   }
 
   return (
-    <div style={styles.container}>
-      <h2>Cadastro de Skills</h2>
+    <div style={s.page}>
+      <div style={{ ...s.orb, top: -120, left: -120, width: 450, height: 450, background: "rgba(124,58,237,0.28)" }} />
+      <div style={{ ...s.orb, bottom: -80, right: 60, width: 320, height: 320, background: "rgba(109,40,217,0.22)" }} />
+      <div style={{ ...s.orb, top: "38%", right: -80, width: 280, height: 280, background: "rgba(139,92,246,0.16)" }} />
 
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.field}>
-          <label style={styles.label}>Nível</label>
-          <div style={styles.radioGroup}>
-            {NIVEIS.map((op) => (
-              <label key={op} style={styles.radioLabel}>
-                <input
-                  type="radio"
-                  name="nivel"
-                  value={op}
-                  checked={nivel === op}
-                  onChange={() => setNivel(op)}
-                />
-                {op}
-              </label>
-            ))}
+      <div style={s.container}>
+        <div style={s.header}>
+          <div style={s.logoCircle}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
           </div>
+          <h1 style={s.title}>Cadastro de Skills</h1>
+          <p style={s.subtitle}>Conte um pouco sobre você para encontrarmos as melhores vagas.</p>
         </div>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Localização</label>
-          <select
-            value={localizacao}
-            onChange={(e) => setLocalizacao(e.target.value)}
-            style={styles.select}
-          >
-            <option value="">Selecione...</option>
-            {LOCALIZACOES.map((op) => (
-              <option key={op} value={op}>
-                {op}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div style={styles.field}>
-          <label style={styles.label}>Idiomas</label>
-          <div style={styles.checkboxGroup}>
-            {IDIOMAS_OPCOES.map((op) => (
-              <label key={op} style={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={idiomas.includes(op)}
-                  onChange={() => setIdiomas(toggleItem(idiomas, op))}
-                />
-                {op}
-              </label>
-            ))}
+        <form onSubmit={handleSubmit} style={s.card}>
+          <div style={s.field}>
+            <label style={s.label}>Nível</label>
+            <div style={s.chipGroup}>
+              {NIVEIS.map((op) => (
+                <label key={op} style={nivel === op ? { ...s.chip, ...s.chipActive } : s.chip}>
+                  <input
+                    type="radio"
+                    name="nivel"
+                    value={op}
+                    checked={nivel === op}
+                    onChange={() => setNivel(op)}
+                    style={s.hiddenInput}
+                  />
+                  {op}
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Skills</label>
-          <div style={styles.checkboxGroup}>
-            {SKILLS_OPCOES.map((op) => (
-              <label key={op} style={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={skills.includes(op)}
-                  onChange={() => setSkills(toggleItem(skills, op))}
-                />
-                {op}
-              </label>
-            ))}
+          <div style={s.field}>
+            <label style={s.label}>Localização</label>
+            <select
+              value={localizacao}
+              onChange={(e) => setLocalizacao(e.target.value)}
+              style={s.select}
+            >
+              <option value="">Selecione...</option>
+              {LOCALIZACOES.map((op) => (
+                <option key={op} value={op} style={s.option}>
+                  {op}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        <button type="submit" style={styles.button}>
-          Cadastrar
-        </button>
-      </form>
+          <div style={s.field}>
+            <label style={s.label}>Idiomas</label>
+            <div style={s.chipGroup}>
+              {IDIOMAS_OPCOES.map((op) => (
+                <label key={op} style={idiomas.includes(op) ? { ...s.chip, ...s.chipActive } : s.chip}>
+                  <input
+                    type="checkbox"
+                    checked={idiomas.includes(op)}
+                    onChange={() => setIdiomas(toggleItem(idiomas, op))}
+                    style={s.hiddenInput}
+                  />
+                  {op}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div style={s.field}>
+            <label style={s.label}>Skills</label>
+            <div style={s.chipGroup}>
+              {SKILLS_OPCOES.map((op) => (
+                <label key={op} style={skills.includes(op) ? { ...s.chip, ...s.chipActive } : s.chip}>
+                  <input
+                    type="checkbox"
+                    checked={skills.includes(op)}
+                    onChange={() => setSkills(toggleItem(skills, op))}
+                    style={s.hiddenInput}
+                  />
+                  {op}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" style={s.button}>
+            Cadastrar
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    maxWidth: 480,
-    margin: "40px auto",
-    padding: 20,
-    border: "1px solid #ddd",
-    borderRadius: 8,
-    fontFamily: "Arial",
+const s: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight: "100vh",
+    width: "100%",
+    background: "linear-gradient(135deg, #0d0b1e 0%, #1a0b3b 50%, #0e1b2e 100%)",
+    display: "flex",
+    justifyContent: "center",
+    position: "relative",
+    overflow: "hidden",
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
   },
-  form: {
+  orb: {
+    position: "absolute",
+    borderRadius: "50%",
+    filter: "blur(90px)",
+    pointerEvents: "none",
+  },
+  container: {
+    width: "100%",
+    maxWidth: 560,
+    padding: "48px 20px 60px",
+    position: "relative",
+    zIndex: 1,
+  },
+  header: {
+    textAlign: "center",
+    marginBottom: 32,
+  },
+  logoCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 18px",
+    boxShadow: "0 0 40px rgba(124,58,237,0.55)",
+  },
+  title: {
+    fontSize: 34,
+    fontWeight: 700,
+    color: "#ffffff",
+    margin: "0 0 12px",
+    letterSpacing: "-0.5px",
+  },
+  subtitle: {
+    fontSize: 15,
+    color: "rgba(255,255,255,0.58)",
+    lineHeight: 1.7,
+    margin: 0,
+  },
+  card: {
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(139,92,246,0.28)",
+    borderRadius: 16,
+    padding: "32px 28px",
+    backdropFilter: "blur(12px)",
     display: "flex",
     flexDirection: "column",
-    gap: 16,
+    gap: 22,
   },
   field: {
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 10,
   },
   label: {
-    fontWeight: "bold",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.75)",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
   },
-  radioGroup: {
-    display: "flex",
-    gap: 16,
-  },
-  radioLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: 4,
-    cursor: "pointer",
-  },
-  select: {
-    padding: "6px 8px",
-    borderRadius: 4,
-    border: "1px solid #ccc",
-    fontSize: 14,
-  },
-  checkboxGroup: {
+  chipGroup: {
     display: "flex",
     flexWrap: "wrap",
     gap: 10,
   },
-  checkboxLabel: {
-    display: "flex",
+  chip: {
+    display: "inline-flex",
     alignItems: "center",
-    gap: 4,
+    padding: "8px 16px",
+    borderRadius: 20,
+    border: "1px solid rgba(139,92,246,0.35)",
+    background: "rgba(255,255,255,0.05)",
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 13.5,
+    fontWeight: 500,
+    cursor: "pointer",
+    userSelect: "none",
+    transition: "all 0.15s",
+  },
+  chipActive: {
+    background: "rgba(124,58,237,0.28)",
+    border: "1px solid rgba(167,139,250,0.9)",
+    color: "#ffffff",
+  },
+  hiddenInput: {
+    position: "absolute",
+    opacity: 0,
+    width: 0,
+    height: 0,
+  },
+  select: {
+    padding: "11px 12px",
+    borderRadius: 8,
+    border: "1px solid rgba(139,92,246,0.3)",
+    background: "rgba(255,255,255,0.08)",
+    color: "#ffffff",
+    fontSize: 14,
+    fontFamily: "inherit",
     cursor: "pointer",
   },
+  option: {
+    background: "#1a0b3b",
+    color: "#ffffff",
+  },
   button: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#007bff",
+    marginTop: 8,
+    padding: "12px 16px",
+    backgroundColor: "#7c3aed",
     color: "#fff",
     border: "none",
-    borderRadius: 5,
+    borderRadius: 8,
     cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 14,
   },
 };
 

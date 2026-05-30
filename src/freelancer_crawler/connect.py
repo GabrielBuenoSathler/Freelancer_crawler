@@ -166,28 +166,37 @@ def vagas_to_emb():
 def profile(user_id):
     with engine.connect() as conn:
         result = conn.execute(
-            text("SELECT nivel, skill FROM user_profile WHERE user_id = :user_id"),
+            text("""
+                SELECT username, nivel, localizacao, idiomas, skill
+                FROM user_profile
+                WHERE user_id = :user_id
+            """),
             {"user_id": user_id},
         )
         return result.mappings().all()
 
 
-def update_profile(user_id):
- with engine.begin() as conn:                                                
-     conn.execute(                                                           
-         text("""                                                            
-             UPDATE user_profile                                                    
-             SET  nivel = :nivel,
-             localizacao =:localizacao , idiomas = idiomas: skill =:skill
-             WHERE user_id = :user_id                                        
-         """),                                                               
-         {   
-                "nivel"       : nivel,
-                "localizacao" : localizacao,
-                "idiomas" :     idiomas,
-                "skill" :       skill
-         },                                                                  
-     )                                                                       
+def update_profile(user_id, username, nivel, localizacao, idiomas, skill):
+    with engine.begin() as conn:
+        conn.execute(
+            text("""
+                UPDATE user_profile
+                SET username = :username,
+                    nivel = :nivel,
+                    localizacao = :localizacao,
+                    idiomas = :idiomas,
+                    skill = :skill
+                WHERE user_id = :user_id
+            """),
+            {
+                "user_id": user_id,
+                "username": username,
+                "nivel": nivel,
+                "localizacao": localizacao,
+                "idiomas": idiomas,
+                "skill": skill,
+            },
+        )
 
 def get_skills(user_id):
     with engine.connect() as conn:
