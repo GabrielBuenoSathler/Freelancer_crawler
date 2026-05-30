@@ -65,14 +65,14 @@ def get_current_user(
 
     # psycopg3: execute direto na conexão, sem .cursor() como context manager
     row = conn.execute(
-        "SELECT id, email FROM users WHERE email = %s",
+        "SELECT user_id, email FROM users WHERE email = %s",
         (subject_email,)
     ).fetchone()
 
     if row is None:
         raise credentials_exception
 
-    return row["id"]
+    return row["user_id"]
 
 
 
