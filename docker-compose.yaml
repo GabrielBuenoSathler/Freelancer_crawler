@@ -2,15 +2,13 @@ services:
   app:
     build:
       context: .
-      cache_from:
-        - gabrielbueno123/api:latest
-    image: gabrielbueno123/api:latest
     container_name: minha_api
     ports:
       - "8000:8000"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+    networks:
+      - app_network
     env_file:
       - .env
     environment:
@@ -40,15 +38,16 @@ services:
     build:
       context: ./frontend/vagas-app
       dockerfile: Dockerfile
-      cache_from:
-        - gabrielbueno123/frontend:latest
-    image: gabrielbueno123/frontend:latest
     container_name: minha_frontend
     ports:
       - "80:80"
     depends_on:
       app:
         condition: service_healthy
+    volumes:
+      - /var/www/certbot:/var/www/certbot:ro
+    networks:
+      - app_network
     deploy:
       resources:
         limits:
@@ -62,13 +61,14 @@ services:
       - "5432:5432"
     restart: always
     shm_size: 256mb
+    networks:
+      - app_network
     env_file:
       - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_INITDB_ARGS: -c shared_preload_libraries='' -c max_connections=100
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
     deploy:
@@ -82,3 +82,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+networks:
+  app_network:
+    driver: bridge

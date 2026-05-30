@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, Depends,HTTPException
-from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,profile,get_skills
-from models import User_profile, Users, Token, VagaMatch
+from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,get_skills,update_users,update_profile
+from models import User_profile, UserCreate, Users, Token, VagaMatch
 from fastapi.middleware.cors import CORSMiddleware
 from security import get_password_hash, verify_password,create_access_token,get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
@@ -38,11 +38,19 @@ async def vagas_99freelas(records:int = 0):
 
 
 @app.post("/users/")
-async def create_user(user: Users):
+async def create_user(user: UserCreate):
     inserir_user(user.username, user.email, get_password_hash(user.password))
     return {"message": "user created"}
 
 
+@app.delete("/users/id")
+async def delete_users():
+    pass
+
+@app.put("/user/")
+async def update_user(user: Users):
+    update_users(user.id,user.username , user.email , user.password)
+    return {"message": "usuario atualizado"}
 
 
 @app.post('/user_profile/')
@@ -62,6 +70,23 @@ async def create_user_profile( user_profile : User_profile,
 
     return {"message": "user_profile created"}
 
+
+@app.put('/user_profile/')
+async def update_user_profile(
+    user_profile: User_profile,
+    conn=Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
+    update_profile(
+        current_user,  # id do usuário logado
+        user_profile.username,
+        user_profile.nivel,
+        user_profile.localizacao,
+        user_profile.idiomas,
+        user_profile.skill,
+    )
+
+    return {"message": "user_profile update !"}
 
 
 @app.post('/token', response_model=Token)

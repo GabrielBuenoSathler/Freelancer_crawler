@@ -10,10 +10,16 @@ class Freela(BaseModel):
     plataforma: Optional[str] = None         
     descricao: Optional[str] = None
 
-class Users(BaseModel):                                        
-    username: str                                              
-    email: str                                                 
-    password: str                                              
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+
+class Users(BaseModel):
+    id : int
+    username: str
+    email: str
+    password: str
 
 class User_profile(BaseModel):                                 
     username: str                                              

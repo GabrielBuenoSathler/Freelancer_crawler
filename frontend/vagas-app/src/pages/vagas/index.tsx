@@ -29,6 +29,12 @@ function Vagas() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  function handleLogout() {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("email");
+    navigate("/login");
+  }
+
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
@@ -73,6 +79,23 @@ function Vagas() {
           </div>
           <h1 style={s.title}>Vagas para você</h1>
           <p style={s.subtitle}>Oportunidades que combinam com o seu perfil.</p>
+          <div style={s.headerActions}>
+            <button style={s.editBtn} onClick={() => navigate("/update-skill")}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              Editar perfil
+            </button>
+            <button style={s.logoutBtn} onClick={handleLogout}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Sair
+            </button>
+          </div>
         </div>
 
         {loading && (
@@ -159,6 +182,40 @@ const s: Record<string, React.CSSProperties> = {
     color: "rgba(255,255,255,0.58)",
     lineHeight: 1.7,
     margin: 0,
+  },
+  headerActions: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 18,
+    flexWrap: "wrap",
+  },
+  editBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    padding: "9px 18px",
+    background: "rgba(124,58,237,0.18)",
+    border: "1px solid rgba(139,92,246,0.45)",
+    borderRadius: 8,
+    color: "rgba(196,181,253,1)",
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: "pointer",
+  },
+  logoutBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    padding: "9px 18px",
+    background: "rgba(248,113,113,0.12)",
+    border: "1px solid rgba(248,113,113,0.45)",
+    borderRadius: 8,
+    color: "rgba(252,165,165,1)",
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: "pointer",
   },
   grid: {
     display: "grid",

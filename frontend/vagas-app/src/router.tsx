@@ -4,6 +4,7 @@ import Register from './pages/register';
 import RegisterSkill from './pages/register-skill';
 import Login from './pages/login';
 import Vagas from './pages/vagas';
+import UpdateSkill from './pages/update-skill';
 
 function AppRouter() {
   return (
@@ -14,6 +15,7 @@ function AppRouter() {
         <Route path="/register-skill" element={<RegisterSkill />} />
         <Route path="/login" element={<Login />} />
         <Route path="/vagas" element={<Vagas />} />
+        <Route path="/update-skill" element={<UpdateSkill />} />
       </Routes>
     </BrowserRouter>
   );
