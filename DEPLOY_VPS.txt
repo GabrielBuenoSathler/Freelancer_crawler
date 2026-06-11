@@ -1,0 +1,109 @@
+================================================================
+ GUIA DE DEPLOY EM VPS - Freelancer Crawler
+ (FastAPI + React/Vite + PostgreSQL via Docker Compose)
+================================================================
+
+
+1. CRIAR A VPS
+----------------------------------------------------------------
+- Sistema: Ubuntu 22.04 ou 24.04
+- Minimo recomendado: 2 vCPU / 4 GB RAM
+  (precisa de RAM por causa do sentence-transformers e Playwright)
+- Anote o IP publico da VPS.
+
+
+2. ACESSAR E INSTALAR O DOCKER
+----------------------------------------------------------------
+ssh root@SEU_IP
+
+apt update && apt upgrade -y
+curl -fsSL https://get.docker.com | sh
+apt install -y docker-compose-plugin git
+
+
+3. FIREWALL
+----------------------------------------------------------------
+ufw allow OpenSSH
+ufw allow 80
+ufw allow 443
+ufw enable
+
+
+4. CLONAR O PROJETO
+----------------------------------------------------------------
+git clone SEU_REPOSITORIO.git
+cd freelancer_crawler
+
+
+5. CRIAR O ARQUIVO .env
+----------------------------------------------------------------
+nano .env
+
+Conteudo:
+
+    POSTGRES_USER=docker
+    POSTGRES_PASSWORD=TROQUE_POR_SENHA_FORTE
+    POSTGRES_DB=FREELANCERS
+    CORS_ORIGIN=https://seudominio.com
+    TOKEN=token_telegram_opcional
+
+
+6. SUBIR TUDO
+----------------------------------------------------------------
+docker compose up --build -d     # builda e roda em background
+docker compose ps                # ver status dos containers
+docker compose logs -f           # acompanhar logs
+
+
+7. DOMINIO + HTTPS (reverse proxy com Caddy)
+----------------------------------------------------------------
+- Aponte o DNS (registro A) do seu dominio para o IP da VPS.
+- Depois instale e configure o Caddy:
+
+apt install -y caddy
+nano /etc/caddy/Caddyfile
+
+Conteudo do Caddyfile:
+
+    seudominio.com {
+        reverse_proxy localhost:5173
+    }
+    api.seudominio.com {
+        reverse_proxy localhost:8000
+    }
+
+Recarregar:
+
+systemctl reload caddy
+
+(O Caddy gera o certificado HTTPS / Let's Encrypt automaticamente.)
+
+
+COMANDOS DO DIA A DIA
+----------------------------------------------------------------
+docker compose down                          # parar tudo
+docker compose up -d --build                 # rebuildar e subir
+git pull && docker compose up -d --build     # deploy de nova versao
+docker compose logs -f api                   # logs de um servico
+docker compose exec api bash                 # shell no container da API
+docker compose exec db psql -U docker -d FREELANCERS   # shell no banco
+
+
+================================================================
+ ATENCAO - AJUSTES IMPORTANTES ANTES DE PRODUCAO
+================================================================
+1. VITE_API_URL: o frontend precisa apontar para
+   https://api.seudominio.com no momento do BUILD,
+   senao ele vai chamar localhost.
+
+2. Se o docker-compose roda "npm run dev" (Vite dev server),
+   o ideal em producao e fazer build estatico (npm run build)
+   e servir os arquivos via Nginx/Caddy.
+
+3. SECRET_KEY do JWT (security.py) e a senha do banco NAO podem
+   ficar com os valores default de desenvolvimento.
+
+4. Playwright (crawler) precisa do chromium instalado no
+   container da API. Confirme que o Dockerfile faz
+   "playwright install chromium" + dependencias.
+================================================================
