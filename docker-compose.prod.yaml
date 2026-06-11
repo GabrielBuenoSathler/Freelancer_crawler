@@ -1,0 +1,102 @@
+# Production compose - pulls pre-built images from a registry (no source code needed on the VPS).
+#
+# Before using:
+#   1. Build & push the images from your dev machine / CI:
+#        docker build -t ${REGISTRY}/freelancer-api:${TAG} .
+#        docker build -t ${REGISTRY}/freelancer-frontend:${TAG} ./frontend/vagas-app
+#        docker push ${REGISTRY}/freelancer-api:${TAG}
+#        docker push ${REGISTRY}/freelancer-frontend:${TAG}
+#   2. Copy ONLY this file + .env to the VPS.
+#   3. On the VPS:  docker compose -f docker-compose.prod.yaml pull
+#                   docker compose -f docker-compose.prod.yaml up -d
+#
+# Set REGISTRY and TAG in your .env (e.g. REGISTRY=ghcr.io/seu_user, TAG=latest).
+
+services:
+  app:
+    image: ${REGISTRY}/freelancer-api:${TAG:-latest}
+    container_name: minha_api
+    restart: always
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    image: ${REGISTRY}/freelancer-frontend:${TAG:-latest}
+    container_name: minha_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - /var/www/certbot:/var/www/certbot:ro
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    expose:
+      - "5432"
+    restart: always
+    shm_size: 256mb
+    networks:
+      - app_network
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  app_network:
+    driver: bridge
