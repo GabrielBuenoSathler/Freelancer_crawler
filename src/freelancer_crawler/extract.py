@@ -39,7 +39,7 @@ def vagas_to_emb(limit=100):
         FROM freelas
         WHERE descricao IS NOT NULL
         AND plataforma IS NOT NULL
-        AND created_at >= '2026-05-01'::timestamp
+        AND created_at >= '2026-06-01'::timestamp
         AND created_at < '2026-06-11'::timestamp
 
     """)
