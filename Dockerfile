@@ -35,6 +35,9 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
+# Baixa o modelo de embeddings no build: nenhuma request paga o download do HF Hub
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
 COPY src/freelancer_crawler/ .
 
 EXPOSE 8000

@@ -37,14 +37,26 @@ with sync_playwright() as p:
     for a in soup.select('a[href^="/project/"]'):
         titulo = a.get_text(strip=True)
 
-        if titulo:
+        if titulo and a["href"] != "/project/new":
             link = "https://www.99freelas.com.br" + a["href"]
 
             jobs.append({
                 "titulo": titulo,
                 "link": link,
-                "plataforma": "99Freelas"
+                "plataforma": "99Freelas",
+                "descricao": None
             })
+
+    for job in jobs:
+        page.goto(job["link"])
+        soup = BeautifulSoup(page.content(), 'html.parser')
+
+        div = soup.find("div", class_="project-description")
+        job["descricao"] = div.get_text(separator="\n", strip=True) if div else None
+
+    for job in jobs:
+        print(job)
+        print("-" * 80)
 
     # -------------------------
     # Workana

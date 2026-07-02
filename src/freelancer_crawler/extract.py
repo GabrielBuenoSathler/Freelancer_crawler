@@ -4,6 +4,7 @@ from sqlalchemy import text
 import numpy as np
 import pickle
 import os
+import threading
 
 from connect import engine
 
@@ -12,7 +13,10 @@ from connect import engine
 # ======================================
 
 MODEL_NAME = "all-MiniLM-L6-v2"
-CACHE_FILE = "vaga_embeddings.pkl"
+# caminho absoluto: o cache nao depende do diretorio de onde o processo roda
+CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vaga_embeddings.pkl")
+
+_cache_lock = threading.Lock()
 
 _model = None
 
@@ -27,7 +31,7 @@ def get_model():
 # BUSC
 # ======================================
 
-def vagas_to_emb(limit=100):
+def vagas_to_emb(limit=50):
 
     query = text("""
         SELECT
@@ -39,8 +43,9 @@ def vagas_to_emb(limit=100):
         FROM freelas
         WHERE descricao IS NOT NULL
         AND plataforma IS NOT NULL
-        AND created_at >= '2026-06-01'::timestamp
-        AND created_at < '2026-06-11'::timestamp
+
+        ORDER BY created_at DESC
+        LIMIT :limit
 
     """)
 
@@ -100,6 +105,13 @@ def perfil_to_text(user):
 
 def gerar_embeddings_vagas(vagas):
 
+    # lock: evita que varias requests regenerem os embeddings ao mesmo tempo
+    with _cache_lock:
+        return _gerar_embeddings_vagas(vagas)
+
+
+def _gerar_embeddings_vagas(vagas):
+
     if os.path.exists(CACHE_FILE):
 
         print("🔹 Carregando embeddings do cache...")
@@ -115,8 +127,14 @@ def gerar_embeddings_vagas(vagas):
                 and "embedding" in vagas_cache[0]
             ):
 
-                print("✅ Cache válido")
-                return vagas_cache
+                links_cache = {vaga["link"] for vaga in vagas_cache}
+                links_atuais = {vaga["link"] for vaga in vagas}
+
+                if links_cache == links_atuais:
+                    print("✅ Cache válido")
+                    return vagas_cache
+
+                print("⚠ Cache desatualizado, regenerando embeddings...")
 
         except Exception as e:
             print(f"⚠ Erro ao carregar cache: {e}")
@@ -211,6 +229,26 @@ def mostrar_resultados(resultados):
         print()
         print(f"Descrição:\n{vaga['descricao'][:300]}")
         print("-" * 60)
+
+
+# ======================================
+# WARMUP
+# ======================================
+
+def warmup():
+    """Carrega o modelo e gera o cache de embeddings antecipadamente,
+    para que /match_vagas nao pague esse custo na primeira request."""
+
+    print("🔹 Warmup: carregando modelo...")
+    get_model()
+
+    try:
+        vagas = vagas_to_emb()
+        gerar_embeddings_vagas(vagas)
+        print("✅ Warmup concluído")
+    except Exception as e:
+        # banco pode nao estar pronto ainda; a request regenera se precisar
+        print(f"⚠ Warmup de embeddings falhou: {e}")
 
 
 # ======================================

@@ -7,8 +7,16 @@ from security import get_password_hash, verify_password,create_access_token,get_
 from fastapi.security import OAuth2PasswordRequestForm
 from connect import profile as db_profile
 
-from extract import match_vagas
+from extract import match_vagas, warmup
 app = FastAPI()
+
+
+@app.on_event("startup")
+def warmup_embeddings():
+    # thread em background: o modelo e o cache de embeddings ficam prontos
+    # antes da primeira request, sem atrasar o boot da API
+    import threading
+    threading.Thread(target=warmup, daemon=True).start()
 
 _cors_extra = os.getenv("CORS_ORIGIN", "")
 _origins = [_cors_extra] if _cors_extra else []
@@ -117,7 +125,7 @@ async def profile(
 
 
 @app.get("/match_vagas", response_model=list[VagaMatch])
-async def match(current_user: int = Depends(get_current_user)):
+def match(current_user: int = Depends(get_current_user)):
     skills = get_skills(current_user)
     if not skills:
         raise HTTPException(status_code=400, detail="User profile not found. Please create a profile first.")
