@@ -38,6 +38,7 @@ MANIFEST
 *.txt 
 *.dump 
 *.backup
+*.md
 pip-log.txt
 pip-delete-this-directory.txt
 
