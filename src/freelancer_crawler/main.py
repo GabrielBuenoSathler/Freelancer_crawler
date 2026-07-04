@@ -57,10 +57,10 @@ async def delete_users():
 
 @app.put("/user/")
 async def update_user(
-     user_profile: user_profile,                         
-     conn=depends(get_db),                               
-     current_user: users = depends(get_current_user),    
-    )
+     user: UserCreate,                         
+     conn=Depends(get_db),                               
+     current_user: Users = Depends(get_current_user),    
+):
 
     update_users(user.id,user.username , user.email , user.password)
     return {"message": "usuario atualizado"}
@@ -86,9 +86,9 @@ async def create_user_profile( user_profile : User_profile,
 
 @app.put('/user_profile/')
 async def update_user_profile(
-    user_profile: user_profile,
-    conn=depends(get_db),
-    current_user: users = depends(get_current_user),
+    user_profile: User_profile, 
+    conn=Depends(get_db),
+    current_user: Users = Depends(get_current_user),
 ):
     update_profile(
         current_user,  # id do usuário logado

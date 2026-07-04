@@ -31,7 +31,7 @@ def get_model():
 # BUSC
 # ======================================
 
-def vagas_to_emb(limit=50):
+def vagas_to_emb(limit=500):
 
     query = text("""
         SELECT
@@ -112,6 +112,9 @@ def gerar_embeddings_vagas(vagas):
 
 def _gerar_embeddings_vagas(vagas):
 
+    # cache indexado por link: {link: vaga_com_embedding}
+    cache_por_link = {}
+
     if os.path.exists(CACHE_FILE):
 
         print("🔹 Carregando embeddings do cache...")
@@ -121,44 +124,57 @@ def _gerar_embeddings_vagas(vagas):
             with open(CACHE_FILE, "rb") as f:
                 vagas_cache = pickle.load(f)
 
-            if (
-                isinstance(vagas_cache, list)
-                and len(vagas_cache) > 0
-                and "embedding" in vagas_cache[0]
-            ):
-
-                links_cache = {vaga["link"] for vaga in vagas_cache}
-                links_atuais = {vaga["link"] for vaga in vagas}
-
-                if links_cache == links_atuais:
-                    print("✅ Cache válido")
-                    return vagas_cache
-
-                print("⚠ Cache desatualizado, regenerando embeddings...")
+            if isinstance(vagas_cache, list):
+                for vaga in vagas_cache:
+                    if "embedding" in vaga and vaga.get("link"):
+                        cache_por_link[vaga["link"]] = vaga
 
         except Exception as e:
             print(f"⚠ Erro ao carregar cache: {e}")
 
-    print("🔹 Gerando embeddings...")
+    # só gera embedding das vagas que ainda nao estao em cache
+    vagas_faltando = [
+        vaga
+        for vaga in vagas
+        if vaga["link"] not in cache_por_link
+    ]
 
-    textos = [vaga["descricao"] for vaga in vagas]
+    if vagas_faltando:
 
-    embeddings = get_model().encode(
-        textos,
-        batch_size=32,
-        convert_to_numpy=True,
-        show_progress_bar=True
-    )
+        print(f"🔹 Gerando embeddings de {len(vagas_faltando)} vaga(s) nova(s)...")
 
-    for i, vaga in enumerate(vagas):
-        vaga["embedding"] = embeddings[i]
+        textos = [vaga["descricao"] for vaga in vagas_faltando]
 
-    with open(CACHE_FILE, "wb") as f:
-        pickle.dump(vagas, f)
+        embeddings = get_model().encode(
+            textos,
+            batch_size=32,
+            convert_to_numpy=True,
+            show_progress_bar=True
+        )
 
-    print("✅ Cache salvo")
+        for i, vaga in enumerate(vagas_faltando):
+            vaga["embedding"] = embeddings[i]
+            cache_por_link[vaga["link"]] = vaga
 
-    return vagas
+    else:
+        print("✅ Cache válido (nenhuma vaga nova)")
+
+    # resultado na ordem das vagas atuais, reaproveitando embeddings do cache
+    resultado = [
+        cache_por_link[vaga["link"]]
+        for vaga in vagas
+    ]
+
+    # persiste o cache apenas se algo mudou (evita I/O desnecessário).
+    # salva só o conjunto atual, para o arquivo nao crescer indefinidamente.
+    if vagas_faltando:
+
+        with open(CACHE_FILE, "wb") as f:
+            pickle.dump(resultado, f)
+
+        print("✅ Cache salvo")
+
+    return resultado
 
 
 # ======================================
