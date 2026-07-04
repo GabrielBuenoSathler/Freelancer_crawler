@@ -1,23 +1,27 @@
 from datetime import datetime,timedelta
+from typing import Any
 from pwdlib import PasswordHash
 from http import HTTPStatus
 from zoneinfo import ZoneInfo
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jwt import decode, encode,InvalidTokenError
-from connect import get_db 
+from psycopg import Connection
+from psycopg.rows import DictRow
+from connect import get_db
 
 import os
 
-SECRET_KEY = os.getenv('SECRET_KEY')
-if not SECRET_KEY:
+_secret_key = os.getenv('SECRET_KEY')
+if not _secret_key:
     raise ValueError('SECRET_KEY environment variable is required for production security')
+SECRET_KEY: str = _secret_key
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = PasswordHash.recommended()
 
 
-def create_access_token(data: dict):
+def create_access_token(data: dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.now(tz=ZoneInfo('UTC')) + timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
@@ -27,11 +31,11 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-def get_password_hash(password: str):
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password) 
 
 
-def verify_password(plain_password: str, hashed_password: str):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
@@ -40,9 +44,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 # security.py - get_current_user
 def get_current_user(
-    conn = Depends(get_db),
+    conn: Connection[DictRow] = Depends(get_db),
     token: str = Depends(oauth2_scheme),
-):
+) -> int:
 
     if token is None:
         raise HTTPException(

@@ -1,10 +1,11 @@
 import json
 import os
+from collections.abc import Iterator, Sequence
 
 import psycopg
 from dotenv import load_dotenv
-from psycopg.rows import dict_row
-from sqlalchemy import create_engine, text
+from psycopg.rows import DictRow, dict_row
+from sqlalchemy import RowMapping, create_engine, text
 
 from models import Freela
 
@@ -29,7 +30,7 @@ SQLALCHEMY_URL = f"postgresql+psycopg://{_CREDENTIALS}"  # used by SQLAlchemy en
 engine = create_engine(SQLALCHEMY_URL)
 
 
-def get_db():
+def get_db() -> Iterator[psycopg.Connection[DictRow]]:
     with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
         print("GETDB")
         yield conn
@@ -38,7 +39,7 @@ def get_db():
 # ---------------------------------------------------------------------------
 # INSERT / UPDATE
 # ---------------------------------------------------------------------------
-def insere_titulo_link(title, link, plataforma, descricao=None):
+def insere_titulo_link(title: str, link: str, plataforma: str, descricao: str | None = None) -> None:
     with engine.begin() as conn:
         conn.execute(
             text("""
@@ -58,7 +59,7 @@ def insere_titulo_link(title, link, plataforma, descricao=None):
         )
 
 
-def inserir_user(username, email, password):
+def inserir_user(username: str, email: str, password: str) -> None:
     with engine.begin() as conn:
         conn.execute(
             text("""
@@ -74,7 +75,14 @@ def inserir_user(username, email, password):
 
 
 # user_profile columns: user_id | username | nivel | localizacao | idiomas | skill
-def inserir_user_profile(user_id, username, nivel, localizacao, idiomas, skill):
+def inserir_user_profile(
+    user_id: int,
+    username: str,
+    nivel: str,
+    localizacao: str,
+    idiomas: str,
+    skill: str,
+) -> None:
     with engine.begin() as conn:
         conn.execute(
             text("""
@@ -92,7 +100,12 @@ def inserir_user_profile(user_id, username, nivel, localizacao, idiomas, skill):
         )
 
 
-def update_users(user_id, username, email, password):
+def update_users(
+    user_id: int,
+    username: str | None,
+    email: str | None,
+    password: str | None,
+) -> None:
     fields = {
         "username": username,
         "email": email,
@@ -121,7 +134,7 @@ def update_users(user_id, username, email, password):
 # ---------------------------------------------------------------------------
 # LISTAR REGISTROS
 # ---------------------------------------------------------------------------
-def show_records(itens):
+def show_records(itens: int) -> str:
     with engine.connect() as conn:
         result = conn.execute(
             text("SELECT * FROM freelas LIMIT :limit"),
@@ -137,7 +150,7 @@ def show_records(itens):
 # ---------------------------------------------------------------------------
 # FILTRAR POR PLATAFORMA
 # ---------------------------------------------------------------------------
-def vagas_por_plataforma(plataforma):
+def vagas_por_plataforma(plataforma: str) -> str:
     with engine.connect() as conn:
         result = conn.execute(
             text("SELECT * FROM freelas WHERE plataforma = :plataforma"),
@@ -155,7 +168,7 @@ def vagas_por_plataforma(plataforma):
 # ---------------------------------------------------------------------------
 # EMBEDDINGS / MATCHING
 # ---------------------------------------------------------------------------
-def vagas_to_emb():
+def vagas_to_emb() -> Sequence[RowMapping]:
     with engine.connect() as conn:
         result = conn.execute(
             text("SELECT titulo, descricao FROM freelas WHERE descricao IS NOT NULL")
@@ -163,7 +176,7 @@ def vagas_to_emb():
         return result.mappings().all()
 
 
-def profile(user_id):
+def profile(user_id: int) -> Sequence[RowMapping]:
     with engine.connect() as conn:
         result = conn.execute(
             text("""
@@ -176,7 +189,14 @@ def profile(user_id):
         return result.mappings().all()
 
 
-def update_profile(user_id, username, nivel, localizacao, idiomas, skill):
+def update_profile(
+    user_id: int,
+    username: str,
+    nivel: str,
+    localizacao: str,
+    idiomas: str,
+    skill: str,
+) -> None:
     with engine.begin() as conn:
         conn.execute(
             text("""
@@ -198,7 +218,7 @@ def update_profile(user_id, username, nivel, localizacao, idiomas, skill):
             },
         )
 
-def get_skills(user_id):
+def get_skills(user_id: int) -> Sequence[RowMapping]:
     with engine.connect() as conn:
         result = conn.execute(
             text("SELECT skill FROM user_profile WHERE user_id = :user_id"),

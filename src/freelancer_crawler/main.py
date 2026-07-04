@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, Depends,HTTPException
 from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,get_skills,update_users,update_profile
-from models import User_profile, UserCreate, Users, UserUpdate, Token, VagaMatch
+from models import User_profile, UserCreate, UserUpdate, Token, VagaMatch
 from fastapi.middleware.cors import CORSMiddleware
 from security import get_password_hash, verify_password,create_access_token,get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
@@ -58,9 +58,10 @@ async def update_user(
 
 
 @app.post('/user_profile/')
-async def create_user_profile( user_profile : User_profile, 
-    conn  = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
+async def create_user_profile(
+    user_profile: User_profile,
+    conn=Depends(get_db),
+    current_user: int = Depends(get_current_user),
 ):
     print("ew")
     inserir_user_profile(
@@ -79,7 +80,7 @@ async def create_user_profile( user_profile : User_profile,
 async def update_user_profile(
     user_profile: User_profile,
     conn=Depends(get_db),
-    current_user: Users = Depends(get_current_user),
+    current_user: int = Depends(get_current_user),
 ):
     update_profile(
         current_user,  # id do usuário logado
@@ -127,5 +128,5 @@ async def match(current_user: int = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="User profile not found. Please create a profile first.")
 
     print(skills)
-    return match_vagas(skills[0])
+    return match_vagas(dict(skills[0]))
   

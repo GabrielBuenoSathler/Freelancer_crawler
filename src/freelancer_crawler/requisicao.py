@@ -5,7 +5,7 @@ import json
 url = "http://127.0.0.1:8000/vagas_99freelas"
 
 
-def teste(url): 
+def teste(url: str) -> list[tuple[str, str]]:
     response = requests.get(url)
     data = response.json()
 

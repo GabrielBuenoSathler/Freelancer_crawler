@@ -2,12 +2,21 @@ from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import re
 import unicodedata
+from typing import NotRequired, TypedDict
 from connect import insere_titulo_link
 
-# Lista única para tudo
-jobs = []
 
-def transforma_link(text):
+class Job(TypedDict):
+    titulo: str
+    link: str
+    plataforma: str
+    descricao: NotRequired[str | None]
+
+
+# Lista única para tudo
+jobs: list[Job] = []
+
+def transforma_link(text: str) -> str:
     text = unicodedata.normalize('NFKD', text)
     text = text.encode('ascii', 'ignore').decode('ascii')
     text = text.lower()
@@ -22,7 +31,7 @@ with sync_playwright() as p:
     # -------------------------
     # FUNÇÃO DESCRIÇÃO (USADA SÓ NO WORKANA)
     # -------------------------
-    def descricao(descricao_vaga):
+    def descricao(descricao_vaga: str) -> str | None:
         page.goto(descricao_vaga)
         soup = BeautifulSoup(page.content(),'html.parser')
         descricao_tag = soup.find("div", class_="expander")
@@ -38,7 +47,7 @@ with sync_playwright() as p:
         titulo = a.get_text(strip=True)
 
         if titulo:
-            link = "https://www.99freelas.com.br" + a["href"]
+            link = "https://www.99freelas.com.br" + str(a["href"])
 
             jobs.append({
                 "titulo": titulo,
@@ -53,7 +62,7 @@ with sync_playwright() as p:
     soup = BeautifulSoup(page.content(), 'html.parser')
 
     for item in soup.select("h2.project-title a span[title]"):
-        titulo = item.get("title")
+        titulo = str(item.get("title") or "")
 
         if titulo:
             slug = transforma_link(titulo)

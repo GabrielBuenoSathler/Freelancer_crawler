@@ -4,7 +4,8 @@ from sqlalchemy import text
 import numpy as np
 import pickle
 import os
-
+from collections.abc import Mapping
+from typing import Any
 from connect import engine
 
 # =====================================
@@ -14,9 +15,9 @@ from connect import engine
 MODEL_NAME = "all-MiniLM-L6-v2"
 CACHE_FILE = "vaga_embeddings.pkl"
 
-_model = None
+_model: SentenceTransformer | None = None
 
-def get_model():
+def get_model() -> SentenceTransformer:
     global _model
     if _model is None:
         print("🔹 Carregando modelo...")
@@ -27,7 +28,7 @@ def get_model():
 # BUSC
 # ======================================
 
-def vagas_to_emb(limit=100):
+def vagas_to_emb(limit: int = 500) -> list[dict[str, Any]]:
 
     query = text("""
         SELECT
@@ -39,8 +40,9 @@ def vagas_to_emb(limit=100):
         FROM freelas
         WHERE descricao IS NOT NULL
         AND plataforma IS NOT NULL
-        AND created_at >= '2026-05-01'::timestamp
-        AND created_at < '2026-06-11'::timestamp
+        AND created_at >= NOW() - INTERVAL '1 day'
+        ORDER BY created_at DESC
+        LIMIT :limit
 
     """)
 
@@ -75,7 +77,7 @@ def vagas_to_emb(limit=100):
 # PERFIL -> TEXTO
 # ======================================
 
-def perfil_to_text(user):
+def perfil_to_text(user: Mapping[str, Any]) -> str:
 
     print("USER:", user)
 
@@ -98,7 +100,7 @@ def perfil_to_text(user):
 # GERAR EMBEDDINGS VAGAS
 # ======================================
 
-def gerar_embeddings_vagas(vagas):
+def gerar_embeddings_vagas(vagas: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     if os.path.exists(CACHE_FILE):
 
@@ -147,7 +149,7 @@ def gerar_embeddings_vagas(vagas):
 # EMBEDDING USUÁRIO
 # ======================================
 
-def gerar_embedding_usuario(user):
+def gerar_embedding_usuario(user: Mapping[str, Any]) -> np.ndarray:
 
     texto = perfil_to_text(user)
 
@@ -163,7 +165,11 @@ def gerar_embedding_usuario(user):
 # MATCH
 # ======================================
 
-def calcular_match_vagas(user_embedding, vagas, top_k=10):
+def calcular_match_vagas(
+    user_embedding: np.ndarray,
+    vagas: list[dict[str, Any]],
+    top_k: int = 10,
+) -> list[dict[str, Any]]:
 
     vaga_embeddings = np.array([
         vaga["embedding"]
@@ -199,7 +205,7 @@ def calcular_match_vagas(user_embedding, vagas, top_k=10):
 # OUTPUT
 # ======================================
 
-def mostrar_resultados(resultados):
+def mostrar_resultados(resultados: list[dict[str, Any]]) -> None:
 
     print("\n========== RESULTADOS ==========\n")
     for i, vaga in enumerate(resultados, start=1):
@@ -217,7 +223,7 @@ def mostrar_resultados(resultados):
 # PIPELINE
 # ======================================
 
-def match_vagas(user):
+def match_vagas(user: Mapping[str, Any]) -> list[dict[str, Any]]:
 
     print("🔹 Buscando vagas...")
 
