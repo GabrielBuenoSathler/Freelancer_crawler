@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, Depends,HTTPException
 from connect import show_records, inserir_user_profile,vagas_por_plataforma, inserir_user,get_db ,get_skills,update_users,update_profile
-from models import User_profile, UserCreate, Users, Token, VagaMatch
+from models import User_profile, UserCreate, Users, UserUpdate, Token, VagaMatch
 from fastapi.middleware.cors import CORSMiddleware
 from security import get_password_hash, verify_password,create_access_token,get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
@@ -48,8 +48,12 @@ async def delete_users():
     pass
 
 @app.put("/user/")
-async def update_user(user: Users):
-    update_users(user.id,user.username , user.email , user.password)
+async def update_user(
+    user: UserUpdate,
+    current_user: int = Depends(get_current_user),
+):
+    hashed_password = get_password_hash(user.password) if user.password else None
+    update_users(current_user, user.username, user.email, hashed_password)
     return {"message": "usuario atualizado"}
 
 

@@ -37,8 +37,12 @@ MANIFEST
 # Installer logs
 *.txt
 *.md
-*.dump 
+*.dump
 *.backup
+
+# Database dumps / backups (may contain user data and password hashes)
+*.sql
+backup*.sql
 pip-log.txt
 pip-delete-this-directory.txt
 

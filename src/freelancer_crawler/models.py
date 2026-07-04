@@ -21,6 +21,11 @@ class Users(BaseModel):
     email: str
     password: str
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
 class User_profile(BaseModel):                                 
     username: str                                              
     nivel: str                                                 
