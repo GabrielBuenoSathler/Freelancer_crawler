@@ -37,14 +37,26 @@ with sync_playwright() as p:
     for a in soup.select('a[href^="/project/"]'):
         titulo = a.get_text(strip=True)
 
-        if titulo:
+        if titulo and a["href"] != "/project/new":
             link = "https://www.99freelas.com.br" + a["href"]
 
             jobs.append({
                 "titulo": titulo,
                 "link": link,
-                "plataforma": "99Freelas"
+                "plataforma": "99Freelas",
+                "descricao": None
             })
+
+    for job in jobs:
+        page.goto(job["link"])
+        soup = BeautifulSoup(page.content(), 'html.parser')
+
+        div = soup.find("div", class_="project-description")
+        job["descricao"] = div.get_text(separator="\n", strip=True) if div else None
+
+    for job in jobs:
+        print(job)
+        print("-" * 80)
 
     # -------------------------
     # Workana
@@ -87,6 +99,28 @@ with sync_playwright() as p:
                 "titulo": titulo,
                 "link": link,
                 "plataforma": "Freelancer"
+            })
+
+    # -------------------------
+    # Guru.com
+    # -------------------------
+    page.goto("https://www.guru.com/d/jobs/c/programming-development/")
+    page.wait_for_selector("h2.jobRecord__title")
+
+    soup = BeautifulSoup(page.content(), 'html.parser')
+
+    for h2 in soup.select("h2.jobRecord__title"):
+        a = h2.find("a", href=True)
+        titulo = h2.get_text(strip=True)
+
+        if titulo and a:
+            href = a["href"]
+            link = href if href.startswith("http") else "https://www.guru.com" + href
+
+            jobs.append({
+                "titulo": titulo,
+                "link": link,
+                "plataforma": "Guru"
             })
 
     browser.close()

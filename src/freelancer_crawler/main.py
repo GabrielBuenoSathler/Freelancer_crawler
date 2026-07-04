@@ -7,8 +7,16 @@ from security import get_password_hash, verify_password,create_access_token,get_
 from fastapi.security import OAuth2PasswordRequestForm
 from connect import profile as db_profile
 
-from extract import match_vagas
+from extract import match_vagas, warmup
 app = FastAPI()
+
+
+@app.on_event("startup")
+def warmup_embeddings():
+    # thread em background: o modelo e o cache de embeddings ficam prontos
+    # antes da primeira request, sem atrasar o boot da API
+    import threading
+    threading.Thread(target=warmup, daemon=True).start()
 
 _cors_extra = os.getenv("CORS_ORIGIN", "")
 _origins = [_cors_extra] if _cors_extra else []
@@ -48,7 +56,12 @@ async def delete_users():
     pass
 
 @app.put("/user/")
-async def update_user(user: Users):
+async def update_user(
+     user: UserCreate,                         
+     conn=Depends(get_db),                               
+     current_user: Users = Depends(get_current_user),    
+):
+
     update_users(user.id,user.username , user.email , user.password)
     return {"message": "usuario atualizado"}
 
@@ -58,7 +71,7 @@ async def create_user_profile( user_profile : User_profile,
     conn  = Depends(get_db),
     current_user: Users = Depends(get_current_user)
 ):
-    print("ew")
+    
     inserir_user_profile(
         current_user,  # id do usuário logado
         user_profile.username,
@@ -73,7 +86,7 @@ async def create_user_profile( user_profile : User_profile,
 
 @app.put('/user_profile/')
 async def update_user_profile(
-    user_profile: User_profile,
+    user_profile: User_profile, 
     conn=Depends(get_db),
     current_user: Users = Depends(get_current_user),
 ):
@@ -117,7 +130,7 @@ async def profile(
 
 
 @app.get("/match_vagas", response_model=list[VagaMatch])
-async def match(current_user: int = Depends(get_current_user)):
+def match(current_user: int = Depends(get_current_user)):
     skills = get_skills(current_user)
     if not skills:
         raise HTTPException(status_code=400, detail="User profile not found. Please create a profile first.")
