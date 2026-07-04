@@ -35,7 +35,8 @@ MANIFEST
 *.spec
 
 # Installer logs
-*.txt 
+*.txt
+*.md
 *.dump 
 *.backup
 pip-log.txt
